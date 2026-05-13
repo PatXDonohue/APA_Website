@@ -1,0 +1,7 @@
+node_modules/
+database/apa.db
+database/apa.db-shm
+database/apa.db-wal
+.env
+.DS_Store
+npm-debug.log*

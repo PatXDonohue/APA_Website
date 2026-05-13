@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Member Login - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login" class="active">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>Member Login</h1>
+    <div class="errors" id="login-errors" style="display:none" role="alert"></div>
+    <form id="login-form" class="card" style="max-width:500px">
+      <div class="field"><label for="username">Username</label>
+        <input id="username" name="username" required autocomplete="username"></div>
+      <div class="field"><label for="password">Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password"></div>
+      <p><button type="submit" class="btn">Log in</button></p>
+      <p>Not a member yet? <a href="/register">Create an account</a>.</p>
+    </form>
+  </main>
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const body = Object.fromEntries(new FormData(form).entries());
+      const { ok, data } = await APA.apiFetch('/api/auth/login', { method: 'POST', body });
+      if (!ok) { APA.showErrors('login-errors', data.error || 'Login failed.'); return; }
+      const next = new URLSearchParams(location.search).get('next');
+      window.location.href = next || (data.user.role === 'admin' ? '/admin' : '/dashboard');
+    });
+  </script>
+</body>
+</html>

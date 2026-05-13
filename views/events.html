@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Events &amp; Tournaments - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/events" class="active">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>Upcoming Events &amp; Tournaments</h1>
+    <div id="event-list">Loading...</div>
+  </main>
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    async function load() {
+      const { data } = await APA.apiFetch('/api/events');
+      const events = (data && data.events) || [];
+      const root = document.getElementById('event-list');
+      if (!events.length) { root.innerHTML = '<p>No upcoming events.</p>'; return; }
+      root.innerHTML = events.map(ev => `
+        <section class="card">
+          <h2>${APA.escapeHtml(ev.name)}</h2>
+          <p><strong>Date:</strong> ${APA.escapeHtml(ev.event_date)}</p>
+          <p><strong>Cost:</strong> ${APA.formatMoney(ev.cost_cents)}</p>
+          <p>${APA.escapeHtml(ev.description || '')}</p>
+          <p>
+            <a class="btn" href="/payments?purpose=tournament&event_id=${ev.id}">Register &amp; Pay</a>
+          </p>
+        </section>`).join('');
+    }
+    load();
+  </script>
+</body>
+</html>

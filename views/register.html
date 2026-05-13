@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join the APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register" class="active">Join</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <h1>New Member Registration</h1>
+    <p>Please complete the form below to join the APA. You must be at least 50 years old.
+       Already a member? <a href="/login">Log in</a> to renew.</p>
+
+    <div class="errors" id="form-errors" style="display:none" role="alert"></div>
+
+    <form id="reg-form" class="card" novalidate>
+      <h2>Account</h2>
+      <div class="field-row">
+        <div class="field"><label for="username">Username</label>
+          <input id="username" name="username" required autocomplete="username"></div>
+        <div class="field"><label for="password">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+          <div class="help">At least 8 characters.</div></div>
+      </div>
+
+      <h2>Your Information</h2>
+      <div class="field"><label for="full_name">Full Name</label>
+        <input id="full_name" name="full_name" required autocomplete="name"></div>
+      <div class="field-row">
+        <div class="field"><label for="date_of_birth">Date of Birth</label>
+          <input id="date_of_birth" name="date_of_birth" type="date" required autocomplete="bday">
+          <div class="help">You must be at least 50 years old.</div></div>
+        <div class="field"><label for="phone">Phone Number</label>
+          <input id="phone" name="phone" type="tel" required autocomplete="tel"></div>
+        <div class="field"><label for="email">Email Address</label>
+          <input id="email" name="email" type="email" required autocomplete="email"></div>
+      </div>
+
+      <h3>Address</h3>
+      <div class="field"><label for="street">Street</label>
+        <input id="street" name="street" required autocomplete="street-address"></div>
+      <div class="field-row">
+        <div class="field"><label for="city">City</label>
+          <input id="city" name="city" required autocomplete="address-level2"></div>
+        <div class="field"><label for="state">State</label>
+          <input id="state" name="state" required maxlength="2" autocomplete="address-level1" placeholder="MA"></div>
+        <div class="field"><label for="zip">ZIP</label>
+          <input id="zip" name="zip" required autocomplete="postal-code"></div>
+      </div>
+      <div class="field"><label for="residency">Residency Status</label>
+        <select id="residency" name="residency" required>
+          <option value="">Choose one...</option>
+          <option value="Resident">Abington Resident</option>
+          <option value="Non-Resident">Non-Resident</option>
+        </select>
+        <div class="help">Non-resident membership is limited and may have a waitlist.</div>
+      </div>
+
+      <h3>Emergency Contact</h3>
+      <div class="field-row">
+        <div class="field"><label for="emergency_contact_name">Name</label>
+          <input id="emergency_contact_name" name="emergency_contact_name" required></div>
+        <div class="field"><label for="emergency_contact_phone">Phone</label>
+          <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" required></div>
+      </div>
+
+      <h2>Release &amp; Signature</h2>
+      <div class="card" style="background:white">
+        <p>By signing below I acknowledge the risks inherent to playing pickleball and release
+           the Abington Pickleball Association, its officers, and volunteers from liability for
+           injuries arising from participation. I confirm the information provided is accurate
+           and that I am at least 50 years of age.</p>
+        <div class="sig-wrap">
+          <canvas id="signature-pad" class="signature-pad" aria-label="Sign here with your mouse or finger"></canvas>
+        </div>
+        <p>
+          <button type="button" class="btn secondary" id="clear-sig">Clear Signature</button>
+        </p>
+        <div class="field"><label for="signed_date">Date</label>
+          <input id="signed_date" name="signed_date" type="date" required></div>
+      </div>
+
+      <p><button type="submit" class="btn">Submit Registration</button></p>
+    </form>
+  </main>
+
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    // Default signed date to today
+    document.getElementById('signed_date').valueAsDate = new Date();
+
+    // Signature pad setup with HiDPI handling
+    const canvas = document.getElementById('signature-pad');
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext('2d').scale(ratio, ratio);
+      pad.clear();
+    }
+    const pad = new SignaturePad(canvas, { penColor: '#1a1a1a' });
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    document.getElementById('clear-sig').addEventListener('click', () => pad.clear());
+
+    function ageFromDob(dob) {
+      const b = new Date(dob);
+      if (isNaN(b)) return -1;
+      const t = new Date();
+      let a = t.getFullYear() - b.getFullYear();
+      const m = t.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a -= 1;
+      return a;
+    }
+
+    document.getElementById('reg-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      const errors = [];
+
+      for (const [k, v] of Object.entries(data)) {
+        if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
+      }
+      if (data.date_of_birth) {
+        const age = ageFromDob(data.date_of_birth);
+        if (age < 50) errors.push('You must be at least 50 years old to join.');
+      }
+      if (pad.isEmpty()) errors.push('Please sign in the signature box.');
+
+      if (errors.length) { APA.showErrors('form-errors', errors); window.scrollTo(0, 0); return; }
+
+      data.signature_data = pad.toDataURL('image/png');
+      const { ok, data: resp } = await APA.apiFetch('/api/members/register', { method: 'POST', body: data });
+      if (!ok) { APA.showErrors('form-errors', resp.errors || resp.error || 'Registration failed.'); window.scrollTo(0, 0); return; }
+      window.location.href = '/payments?purpose=membership&new=1';
+    });
+  </script>
+</body>
+</html>

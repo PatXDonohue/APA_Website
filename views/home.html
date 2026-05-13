@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abington Pickleball Association</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">APA</div>
+      <h1>Abington Pickleball Association</h1>
+    </div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <section class="hero">
+      <h2>Welcome to the courts</h2>
+      <p>The Abington Pickleball Association is a community of players aged 50 and over.
+         Register, renew your membership, and find upcoming events all in one place.</p>
+      <p>
+        <a class="btn" href="/register">Join the APA</a>
+        <a class="btn secondary" href="/login">Member Login</a>
+      </p>
+    </section>
+
+    <section class="card" aria-labelledby="news-heading">
+      <h2 id="news-heading">News &amp; Announcements</h2>
+      <div id="announcements">Loading...</div>
+    </section>
+
+    <section class="card" aria-labelledby="links-heading">
+      <h2 id="links-heading">Helpful Resources</h2>
+      <ul>
+        <li><a href="https://usapickleball.org" target="_blank" rel="noopener">USA Pickleball</a></li>
+        <li><a href="https://www.pickleballcentral.com" target="_blank" rel="noopener">Pickleball Central</a></li>
+        <li><a href="https://www.rocklandathleticsupply.com" target="_blank" rel="noopener">Rockland Athletic Supply</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Questions? Email us at <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    APA.apiFetch('/api/announcements').then(({ data }) => {
+      const list = (data && data.announcements) || [];
+      const el = document.getElementById('announcements');
+      if (!list.length) { el.innerHTML = '<p>No announcements yet.</p>'; return; }
+      el.innerHTML = list.map(a => `
+        <article style="margin-bottom:1.25rem">
+          <h3>${APA.escapeHtml(a.title)}</h3>
+          <p>${APA.escapeHtml(a.body)}</p>
+        </article>`).join('');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+/* Abington Pickleball Association - accessibility-first styles
+   Designed for 50+ audience: large text, high contrast, generous click targets */
+
+:root {
+  --green-dark: #2e6b30;
+  --green: #4ca64c;
+  --green-light: #e6f4e6;
+  --yellow: #f5d547;
+  --yellow-dark: #d4b62a;
+  --ink: #1a1a1a;
+  --ink-muted: #444;
+  --bg: #ffffff;
+  --bg-alt: #f7f9f5;
+  --border: #cbd5c2;
+  --danger: #b3261e;
+  --danger-bg: #fde7e7;
+  --info-bg: #fff8d6;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 18px; }
+
+body {
+  margin: 0;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.55;
+}
+
+a { color: var(--green-dark); text-decoration: underline; text-decoration-thickness: 2px; }
+a:hover, a:focus { color: var(--ink); background: var(--yellow); outline: 3px solid var(--yellow-dark); }
+
+h1 { font-size: 2.25rem; margin: 0 0 1rem; }
+h2 { font-size: 1.65rem; margin: 1.5rem 0 0.75rem; }
+h3 { font-size: 1.3rem; margin: 1.25rem 0 0.5rem; }
+
+p, li, label, input, select, textarea, button { font-size: 1.05rem; }
+
+/* Header / nav */
+.site-header {
+  background: var(--green-dark);
+  color: white;
+  padding: 1rem 1.25rem;
+}
+.site-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.site-header .brand h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: white;
+}
+.site-header .logo {
+  width: 56px; height: 56px;
+  background: var(--yellow);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold;
+  color: var(--green-dark);
+  font-size: 1.2rem;
+}
+
+.site-nav {
+  background: var(--green);
+  border-bottom: 4px solid var(--yellow);
+}
+.site-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+.site-nav a {
+  display: block;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0.85rem 1.2rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.site-nav a:hover, .site-nav a:focus {
+  background: var(--yellow);
+  color: var(--green-dark);
+  outline: none;
+}
+.site-nav a.active { background: var(--green-dark); }
+
+/* Main / containers */
+main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.25rem 3rem; }
+
+.card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.hero {
+  background: var(--green-light);
+  border-left: 8px solid var(--green);
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0.85rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--green-dark);
+  color: white;
+  border: 3px solid var(--green-dark);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+}
+.btn:hover, .btn:focus {
+  background: var(--yellow);
+  color: var(--green-dark);
+  border-color: var(--green-dark);
+  outline: 3px solid var(--green-dark);
+}
+.btn.secondary { background: white; color: var(--green-dark); }
+.btn.danger    { background: var(--danger); border-color: var(--danger); }
+
+/* Forms */
+form .field { margin-bottom: 1rem; }
+form label  { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+form input, form select, form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.05rem;
+  background: white;
+  color: var(--ink);
+}
+form input:focus, form select:focus, form textarea:focus {
+  outline: 3px solid var(--yellow-dark);
+  border-color: var(--green-dark);
+}
+.field-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.field-row > .field { flex: 1 1 220px; }
+
+.help { color: var(--ink-muted); font-size: 0.95rem; margin-top: 0.25rem; }
+
+.errors {
+  background: var(--danger-bg);
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.errors ul { margin: 0.5rem 0 0 1.25rem; }
+
+.notice {
+  background: var(--info-bg);
+  border: 2px solid var(--yellow-dark);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: white; }
+th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: var(--green-light); font-size: 1.05rem; }
+
+/* Signature pad */
+.sig-wrap {
+  border: 3px dashed var(--green-dark);
+  border-radius: 8px;
+  background: white;
+  padding: 0.5rem;
+}
+canvas.signature-pad { width: 100%; height: 180px; touch-action: none; background: white; }
+
+/* Footer */
+footer {
+  background: var(--green-dark);
+  color: white;
+  text-align: center;
+  padding: 1.25rem;
+  font-size: 1rem;
+}
+footer a { color: var(--yellow); }
+
+/* Status pills */
+.pill { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 600; font-size: 0.95rem; }
+.pill.paid    { background: #d6f0d6; color: var(--green-dark); }
+.pill.pending { background: var(--info-bg); color: #6a5300; }
+.pill.expired { background: var(--danger-bg); color: var(--danger); }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .site-nav ul { flex-direction: column; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.35rem; }
+}
+
+/* Skip link for screen readers */
+.skip-link {
+  position: absolute;
+  left: -1000px;
+  top: 0;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 0.5rem 1rem;
+  z-index: 999;
+}
+.skip-link:focus { left: 0; }

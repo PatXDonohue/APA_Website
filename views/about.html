@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About &amp; Policies - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about" class="active">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>About the APA</h1>
+    <p>The Abington Pickleball Association (APA) is a community organization for players
+       aged 50 and older. We maintain courts, organize play, and host tournaments and
+       social events throughout the season.</p>
+
+    <h2>Policies &amp; Procedures</h2>
+    <p><a class="btn" href="/about/policies.pdf">Download Policies (PDF)</a></p>
+
+    <article class="card">
+      <h3>Membership</h3>
+      <p>Members must be 50 years of age or older. Annual membership runs from January 1
+         through December 31. Non-resident membership is limited; if the cap is reached,
+         applicants will be added to a waitlist.</p>
+    </article>
+
+    <article class="card">
+      <h3>Court Use</h3>
+      <p>Courts are open to members during posted hours. Please observe court etiquette,
+         respect rotation, and yield to organized play when scheduled.</p>
+    </article>
+
+    <article class="card">
+      <h3>Guests</h3>
+      <p>Guests must be at least 50 years old, must sign the release waiver, and must
+         pay the guest fee before playing. Members are limited in how often they may bring
+         the same guest in a season — check with the board for details.</p>
+    </article>
+
+    <article class="card">
+      <h3>Conduct</h3>
+      <p>We expect courteous, respectful behavior at all times. Anyone violating the code
+         of conduct may have their membership reviewed by the board.</p>
+    </article>
+
+    <article class="card">
+      <h3>Challenge Play</h3>
+      <p>Members who meet the skill criteria may participate in Challenge Play. Contact a
+         board member to be evaluated.</p>
+    </article>
+  </main>
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

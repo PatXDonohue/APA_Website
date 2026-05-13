@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Account - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login" style="display:none"><a href="/login">Login</a></li>
+      <li id="nav-dashboard"><a href="/dashboard" class="active">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>My Account</h1>
+    <section class="card" id="profile-card">
+      <h2>Profile</h2>
+      <div id="profile-body">Loading...</div>
+    </section>
+
+    <section class="card">
+      <h2>Renew Membership</h2>
+      <p>Pre-filled with your previous information. Update anything that has changed and re-sign.</p>
+      <div class="errors" id="renew-errors" style="display:none" role="alert"></div>
+      <form id="renew-form">
+        <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" required></div>
+        <div class="field-row">
+          <div class="field"><label for="date_of_birth">Date of Birth</label><input id="date_of_birth" name="date_of_birth" type="date" required></div>
+          <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" required></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
+        </div>
+        <div class="field"><label for="street">Street</label><input id="street" name="street" required></div>
+        <div class="field-row">
+          <div class="field"><label for="city">City</label><input id="city" name="city" required></div>
+          <div class="field"><label for="state">State</label><input id="state" name="state" required maxlength="2"></div>
+          <div class="field"><label for="zip">ZIP</label><input id="zip" name="zip" required></div>
+        </div>
+        <div class="field"><label for="residency">Residency</label>
+          <select id="residency" name="residency" required>
+            <option value="Resident">Abington Resident</option>
+            <option value="Non-Resident">Non-Resident</option>
+          </select></div>
+        <div class="field-row">
+          <div class="field"><label for="emergency_contact_name">Emergency Contact Name</label><input id="emergency_contact_name" name="emergency_contact_name" required></div>
+          <div class="field"><label for="emergency_contact_phone">Emergency Contact Phone</label><input id="emergency_contact_phone" name="emergency_contact_phone" required></div>
+        </div>
+
+        <h3>Re-sign Release</h3>
+        <div class="sig-wrap"><canvas id="signature-pad" class="signature-pad" aria-label="Sign here"></canvas></div>
+        <p><button type="button" class="btn secondary" id="clear-sig">Clear Signature</button></p>
+        <div class="field"><label for="signed_date">Date</label><input id="signed_date" name="signed_date" type="date" required></div>
+
+        <p><button type="submit" class="btn">Submit Renewal</button></p>
+      </form>
+    </section>
+  </main>
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    const canvas = document.getElementById('signature-pad');
+    function resize() {
+      const r = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * r;
+      canvas.height = canvas.offsetHeight * r;
+      canvas.getContext('2d').scale(r, r);
+      pad.clear();
+    }
+    const pad = new SignaturePad(canvas);
+    window.addEventListener('resize', resize);
+    document.getElementById('clear-sig').addEventListener('click', () => pad.clear());
+
+    document.getElementById('signed_date').valueAsDate = new Date();
+
+    function statusPill(s) {
+      const cls = s === 'Paid' ? 'paid' : (s === 'Expired' ? 'expired' : 'pending');
+      return `<span class="pill ${cls}">${s}</span>`;
+    }
+
+    async function load() {
+      const { data } = await APA.apiFetch('/api/members/renewal-data');
+      if (!data || !data.member) {
+        document.getElementById('profile-body').textContent = 'Member record not found.';
+        return;
+      }
+      const m = data.member;
+      const r = data.latest_release || {};
+      document.getElementById('profile-body').innerHTML = `
+        <p><strong>${APA.escapeHtml(m.full_name)}</strong></p>
+        <p>Status: ${statusPill(m.status)}</p>
+        <p>${APA.escapeHtml(m.street)}, ${APA.escapeHtml(m.city)}, ${APA.escapeHtml(m.state)} ${APA.escapeHtml(m.zip)}</p>
+        <p>Residency: ${APA.escapeHtml(m.residency)} &middot; Phone: ${APA.escapeHtml(m.phone)}</p>
+        ${m.status !== 'Paid' ? '<p><a class="btn" href="/payments?purpose=membership">Pay Dues</a></p>' : ''}
+      `;
+      // Prefill renewal form
+      const fields = ['full_name','date_of_birth','phone','email','street','city','state','zip','residency','emergency_contact_name','emergency_contact_phone'];
+      for (const f of fields) {
+        const el = document.getElementById(f);
+        if (!el) continue;
+        el.value = (r && r[f]) || (m && m[f]) || '';
+      }
+      resize();
+    }
+    load();
+
+    document.getElementById('renew-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      const errors = [];
+      for (const [k, v] of Object.entries(data)) {
+        if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
+      }
+      if (pad.isEmpty()) errors.push('Please sign in the signature box.');
+      if (errors.length) { APA.showErrors('renew-errors', errors); return; }
+      data.signature_data = pad.toDataURL('image/png');
+      const { ok, data: resp } = await APA.apiFetch('/api/members/renew', { method: 'POST', body: data });
+      if (!ok) { APA.showErrors('renew-errors', resp.errors || resp.error || 'Renewal failed.'); return; }
+      window.location.href = '/payments?purpose=membership&renew=1';
+    });
+  </script>
+</body>
+</html>

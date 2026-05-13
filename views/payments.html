@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payments - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>Make a Payment</h1>
+    <p id="purpose-summary"></p>
+
+    <div class="errors" id="pay-errors" style="display:none" role="alert"></div>
+    <div class="notice" id="pay-success" style="display:none" role="status"></div>
+
+    <section class="card">
+      <h2>Pay by Credit or Debit Card</h2>
+      <p class="help">Processing fee: approximately 3%. Card payments are processed securely through Elavon.</p>
+      <form id="card-form">
+        <div class="field"><label for="name_on_card">Name on Card</label><input id="name_on_card" name="name_on_card" required autocomplete="cc-name"></div>
+        <div class="field"><label for="card_number">Card Number</label><input id="card_number" name="card_number" inputmode="numeric" required autocomplete="cc-number" placeholder="0000 0000 0000 0000"></div>
+        <div class="field-row">
+          <div class="field"><label for="card_exp">Expiration (MM/YY)</label><input id="card_exp" name="card_exp" required autocomplete="cc-exp" placeholder="MM/YY"></div>
+          <div class="field"><label for="card_cvv">CVV</label><input id="card_cvv" name="card_cvv" inputmode="numeric" required autocomplete="cc-csc"></div>
+        </div>
+        <p><button type="submit" class="btn">Pay with Card</button></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Pay by Cash or Check</h2>
+      <p>You may pay by cash or check using one of the following options:</p>
+      <ul>
+        <li>Mail to: APA, PO Box (address available from the board)</li>
+        <li>Deliver in person to a board member</li>
+        <li>Leave a sealed envelope in the shed mailbox at the courts</li>
+      </ul>
+      <p>Your registration will be marked "Pending" until an admin confirms receipt.</p>
+      <form id="check-form">
+        <div class="field-row">
+          <div class="field"><label for="method">Payment Type</label>
+            <select id="method" name="method" required>
+              <option value="check">Check</option>
+              <option value="cash">Cash</option>
+            </select></div>
+          <div class="field"><label for="check_number">Check Number (optional)</label><input id="check_number" name="check_number"></div>
+        </div>
+        <p><button type="submit" class="btn secondary">Record Cash/Check Payment</button></p>
+      </form>
+    </section>
+  </main>
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    const params = new URLSearchParams(location.search);
+    const purpose = params.get('purpose') || 'membership';
+    const eventId = params.get('event_id') || null;
+
+    async function init() {
+      const { data } = await APA.apiFetch('/api/payments/pricing');
+      let amountCents = data.annual_dues_cents;
+      let label = 'Annual Membership Dues';
+      if (purpose === 'guest')      { amountCents = data.guest_fee_cents; label = 'Guest Fee'; }
+      if (purpose === 'tournament' || purpose === 'social') {
+        if (eventId) {
+          const { data: ev } = await APA.apiFetch('/api/events');
+          const found = (ev.events || []).find(e => String(e.id) === String(eventId));
+          if (found) { amountCents = found.cost_cents; label = found.name; }
+        }
+      }
+      const fee = Math.round(amountCents * (data.card_fee_percent / 100));
+      document.getElementById('purpose-summary').innerHTML =
+        `<strong>${APA.escapeHtml(label)}</strong>: ${APA.formatMoney(amountCents)}
+         <span class="help">(Card payments include ~${data.card_fee_percent}% processing fee, ${APA.formatMoney(fee)} estimated)</span>`;
+    }
+    init();
+
+    document.getElementById('card-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      body.purpose = purpose;
+      if (eventId) body.event_id = eventId;
+      const { ok, data } = await APA.apiFetch('/api/payments/card', { method: 'POST', body });
+      if (!ok) {
+        APA.showErrors('pay-errors', data.errors || data.error || 'Payment failed.');
+        return;
+      }
+      const el = document.getElementById('pay-success');
+      el.style.display = 'block';
+      el.innerHTML = `<strong>Payment approved.</strong> Reference: ${APA.escapeHtml(data.reference)}.
+                      A confirmation email with welcome details has been sent.`;
+      APA.showErrors('pay-errors', null);
+      window.scrollTo(0, 0);
+    });
+
+    document.getElementById('check-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      body.purpose = purpose;
+      if (eventId) body.event_id = eventId;
+      const { ok, data } = await APA.apiFetch('/api/payments/cash-check', { method: 'POST', body });
+      if (!ok) {
+        APA.showErrors('pay-errors', data.errors || data.error || 'Could not record payment.');
+        return;
+      }
+      const el = document.getElementById('pay-success');
+      el.style.display = 'block';
+      el.innerHTML = `<strong>Payment recorded as pending.</strong> ${APA.escapeHtml(data.message)}`;
+      APA.showErrors('pay-errors', null);
+      window.scrollTo(0, 0);
+    });
+  </script>
+</body>
+</html>

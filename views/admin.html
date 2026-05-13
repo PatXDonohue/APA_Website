@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/events">Events</a></li>
+      <li><a href="/dashboard">My Account</a></li>
+      <li><a href="/admin" class="active">Admin</a></li>
+      <li><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+  <main id="main">
+    <h1>Admin Dashboard</h1>
+    <div id="overview-summary" class="notice"></div>
+
+    <section class="card">
+      <h2>Members</h2>
+      <p>
+        <a class="btn secondary" href="/api/admin/export.csv">Export to CSV</a>
+      </p>
+      <div id="members-table">Loading...</div>
+    </section>
+
+    <section class="card">
+      <h2>Pending Cash / Check Payments</h2>
+      <div id="pending-table">Loading...</div>
+    </section>
+
+    <section class="card">
+      <h2>Release Forms on File</h2>
+      <div id="releases-table">Loading...</div>
+    </section>
+
+    <section class="card">
+      <h2>Event Registrations</h2>
+      <div id="event-regs-table">Loading...</div>
+    </section>
+
+    <section class="card">
+      <h2>Send Broadcast Email</h2>
+      <div class="errors" id="broadcast-errors" style="display:none" role="alert"></div>
+      <div class="notice" id="broadcast-success" style="display:none" role="status"></div>
+      <form id="broadcast-form">
+        <div class="field"><label for="b-subject">Subject</label><input id="b-subject" name="subject" required></div>
+        <div class="field"><label for="b-body">Message</label><textarea id="b-body" name="body" rows="5" required></textarea></div>
+        <p><button type="submit" class="btn">Send to All Members</button></p>
+      </form>
+    </section>
+  </main>
+  <footer><p>Admin panel - APA board members only.</p></footer>
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    function statusPill(s) {
+      const cls = s === 'Paid' ? 'paid' : (s === 'Expired' ? 'expired' : 'pending');
+      return `<span class="pill ${cls}">${APA.escapeHtml(s)}</span>`;
+    }
+
+    async function loadOverview() {
+      const { data } = await APA.apiFetch('/api/admin/overview');
+      if (!data) return;
+      document.getElementById('overview-summary').innerHTML =
+        `<strong>Non-resident members:</strong> ${data.nonResidentCount} / ${data.nonResidentLimit}`;
+
+      const rows = data.members.map(m => `
+        <tr>
+          <td>${APA.escapeHtml(m.full_name)}</td>
+          <td>${APA.escapeHtml(m.email)}</td>
+          <td>${APA.escapeHtml(m.residency)}</td>
+          <td>${statusPill(m.status)}</td>
+          <td>
+            <label><input type="checkbox" data-id="${m.id}" class="challenge-toggle"
+                          ${m.challenge_play ? 'checked' : ''}> Challenge Play</label>
+          </td>
+        </tr>`).join('');
+      document.getElementById('members-table').innerHTML = `
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Residency</th><th>Status</th><th>Challenge</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+      document.querySelectorAll('.challenge-toggle').forEach(cb => {
+        cb.addEventListener('change', async () => {
+          await APA.apiFetch(`/api/admin/members/${cb.dataset.id}/challenge`, {
+            method: 'POST', body: { challenge_play: cb.checked },
+          });
+        });
+      });
+
+      const pRows = data.pendingPayments.map(p => `
+        <tr>
+          <td>${APA.escapeHtml(p.member_name || p.guest_name || '(unknown)')}</td>
+          <td>${APA.escapeHtml(p.purpose)}</td>
+          <td>${APA.escapeHtml(p.method)}</td>
+          <td>${APA.formatMoney(p.amount_cents)}</td>
+          <td>${APA.escapeHtml(p.reference || '')}</td>
+          <td><button class="btn" data-pid="${p.id}">Confirm Received</button></td>
+        </tr>`).join('');
+      document.getElementById('pending-table').innerHTML = pRows
+        ? `<table><thead><tr><th>For</th><th>Purpose</th><th>Method</th><th>Amount</th><th>Ref</th><th>Action</th></tr></thead><tbody>${pRows}</tbody></table>`
+        : '<p>No pending payments.</p>';
+      document.querySelectorAll('[data-pid]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await APA.apiFetch(`/api/admin/payments/${btn.dataset.pid}/confirm`, { method: 'POST' });
+          loadOverview();
+        });
+      });
+    }
+
+    async function loadReleases() {
+      const { data } = await APA.apiFetch('/api/admin/releases');
+      const rows = (data.releases || []).map(r => `
+        <tr>
+          <td>${APA.escapeHtml(r.member_full_name)}</td>
+          <td>${r.year}</td>
+          <td>${APA.escapeHtml(r.signed_date)}</td>
+          <td><img src="${r.signature_data}" alt="signature" style="max-height:50px;border:1px solid #ccc;background:white"></td>
+        </tr>`).join('');
+      document.getElementById('releases-table').innerHTML = rows
+        ? `<table><thead><tr><th>Member</th><th>Year</th><th>Signed</th><th>Signature</th></tr></thead><tbody>${rows}</tbody></table>`
+        : '<p>No release forms yet.</p>';
+    }
+
+    async function loadEventRegs() {
+      const { data } = await APA.apiFetch('/api/admin/event-registrations');
+      const rows = (data.registrations || []).map(r => `
+        <tr>
+          <td>${APA.escapeHtml(r.event_name)}</td>
+          <td>${APA.escapeHtml(r.event_date)}</td>
+          <td>${APA.escapeHtml(r.attendee_name || '')}</td>
+          <td>${r.payment_status ? statusPill(r.payment_status) : '<span class="pill pending">No Payment</span>'}</td>
+        </tr>`).join('');
+      document.getElementById('event-regs-table').innerHTML = rows
+        ? `<table><thead><tr><th>Event</th><th>Date</th><th>Attendee</th><th>Payment</th></tr></thead><tbody>${rows}</tbody></table>`
+        : '<p>No event registrations yet.</p>';
+    }
+
+    document.getElementById('broadcast-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      const { ok, data } = await APA.apiFetch('/api/admin/broadcast', { method: 'POST', body });
+      if (!ok) { APA.showErrors('broadcast-errors', data.error || 'Failed to send.'); return; }
+      const el = document.getElementById('broadcast-success');
+      el.style.display = 'block';
+      el.textContent = `Sent to ${data.sent} member(s).`;
+      e.target.reset();
+    });
+
+    loadOverview();
+    loadReleases();
+    loadEventRegs();
+  </script>
+</body>
+</html>

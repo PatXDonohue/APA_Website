@@ -1,0 +1,16 @@
+﻿Current System
+Currently the APA annual membership renewal process requires a signed Release and payment. The Release is completed and signed by the member. Payment in cash or check is accepted. Information from the Release is transcribed to an Excel spreadsheet and then stored in Dropbox for access by all Board members. 
+Errors in transcribing information from the Release can occur since most are handwritten. All member and guest Release forms are stored in my home office and need to be shredded each year. In addition errors or incomplete information on checks will result in the bank not accepting the payment. 
+Proposed Changes
+An Abington Pickleball website will be created. All APA policies and procedures will be available for viewing and downloading. We could also provide links to other resources, like USA Pickleball, PickleballCentral and Rockland Athletic Supply.
+Applicants will create an account (with username and password) and then complete an electronic version of the Release and sign using their digital signature. This will be required for all new members, renewals and guests. The system will require all information on the Release to be completed before it can be submitted. It will also check to ensure applicants are at least 50 years old and will keep track of non-resident members to ensure established limits are not exceeded. Member renewals will be expedited by having the system populate the current year Release form with information from the previous year and allow the member to make any changes. Applicants will be directed to our Gmail account for further information or questions.
+This system will eliminate the need to keep the member and guest information in the Finance spreadsheet and eliminate the need to keep original hard copies of Release forms. The system can also be used to keep track of all members who qualify for Challenge play.
+The APA website would be created using the WIX platform(wix.com). Payment will be allowed using a credit or debit card through an e-commerce payment system such as Elavon(Elavon.com), which has an association with Abington bank (now TruNorth) to allow next day funding to our checking account. Once payment has been approved, the system will send a new member letter to the applicant, along with any confidential information such as the passcode for the lockbox and porta potty. Other forms of payment (check or cash) will be allowed, but will need to be mailed to our POB, delivered in person or left in the shed mailbox. Once cash or check payments are deposited in the bank, the administrator will confirm payment and tell the system to accept the application. 
+Payments for other activities such as tournaments and social events can also be made from the website. 
+The cost for processing credit card payments would be about 3% of the amount. In addition the monthly cost for the website e-commerce payments solution would be $15 per month.
+
+
+
+
+
+
