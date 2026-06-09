@@ -57,13 +57,12 @@ p, li, label, input, select, textarea, button { font-size: 1.05rem; }
   color: white;
 }
 .site-header .logo {
-  width: 56px; height: 56px;
-  background: var(--yellow);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: bold;
-  color: var(--green-dark);
-  font-size: 1.2rem;
+  height: 110px;
+  width: auto;
+  display: block;
+  background: white;
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .site-nav {

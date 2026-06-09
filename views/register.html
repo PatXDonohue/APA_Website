@@ -10,7 +10,7 @@
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="site-header">
-    <div class="brand"><div class="logo" aria-hidden="true">APA</div><h1>Abington Pickleball Association</h1></div>
+    <div class="brand"><img class="logo" src="/images/apa-logo.png" alt=""><h1>Abington Pickleball Association</h1></div>
   </header>
   <nav class="site-nav" aria-label="Main navigation">
     <ul>
@@ -85,10 +85,46 @@
 
       <h2>Release &amp; Signature</h2>
       <div class="card" style="background:white">
-        <p>By signing below I acknowledge the risks inherent to playing pickleball and release
-           the Abington Pickleball Association, its officers, and volunteers from liability for
-           injuries arising from participation. I confirm the information provided is accurate
-           and that I am at least 50 years of age.</p>
+        <p style="text-align:center"><strong>Abington Pickleball Association, Inc.</strong><br>
+           Release, Assumption of Risk, and Indemnify Agreement<br>
+           4/1/2026&mdash;3/31/2027</p>
+
+        <p><strong>Release.</strong> In consideration of being permitted to participate in any way in
+           pickleball games sponsored by the Abington Pickleball Association, Inc:</p>
+
+        <p>I for myself, my heirs or assigns, hereby release, waive, and discharge Abington Pickleball
+           Association, Inc., its players, members, volunteers, or any individuals assisting or
+           participating in pickleball, the Abington Senior Center, and the Town of Abington, from any
+           and all claims, rights of action, and causes of action that may have arisen in the past or
+           may arise in the future, directly or indirectly from personal injury, illness, or property
+           damages resulting in the voluntary use of these facilities by me and participants associated
+           with this association, and I covenant not to sue Abington Pickleball Association, Inc., its
+           players, members, volunteers, or any individuals assisting or participating in pickleball, the
+           Abington Senior Center, nor the Town of Abington for such claims, rights of action, and causes
+           of action.</p>
+
+        <p>I also promise to indemnify, defend, and hold harmless the releases against all legal claims
+           and proceedings of any description that may have been asserted in the past, or may be asserted
+           in the future, directly or indirectly, arising from personal injuries, illnesses, or property
+           damage resulting from my participatory, approved use of these town facilities.</p>
+
+        <p><strong>Assumption of Risk.</strong> Participation in the game of pickleball carries with it
+           certain inherent risks that cannot be eliminated regardless of the care taken to avoid harm.
+           The specific risks may vary but include: 1.) minor injuries such as bruises, sprains, and
+           dehydration; 2.) major injuries such as eye, joint, or back injuries, heat stroke, heart attack,
+           and concussion; and 3.) catastrophic injuries such as paralysis and death.</p>
+
+        <p>The Assumption of Risk above also includes being exposed to the COVID-19 Virus and any other
+           illness.</p>
+
+        <p>I have read the previous paragraphs and I know, understand, and appreciate these and other risks
+           that are inherent in playing pickleball. I assert that my participation is voluntary and that I
+           knowingly assume all risks.</p>
+
+        <p><strong>Indemnification and Hold Harmless.</strong> I also agree to indemnify and hold Abington
+           Pickleball Association, Inc., the Abington Senior Center, and the Town of Abington harmless from
+           all claims, actions, suits, costs, expenses, damages, and liabilities, including attorney&rsquo;s
+           fees, brought as a result of my involvement in playing and/or watching pickleball.</p>
         <div class="sig-wrap">
           <canvas id="signature-pad" class="signature-pad" aria-label="Sign here with your mouse or finger"></canvas>
         </div>
@@ -115,6 +151,13 @@
 
     // Default signed date to today
     document.getElementById('signed_date').valueAsDate = new Date();
+
+    // Cap DOB picker at "today minus 50 years" so under-50 dates are visually disabled
+    const dobInput = document.getElementById('date_of_birth');
+    const dobError = document.getElementById('dob-error');
+    const maxDob = new Date();
+    maxDob.setFullYear(maxDob.getFullYear() - 50);
+    dobInput.max = maxDob.toISOString().slice(0, 10);
 
     // Signature pad setup with HiDPI handling
     const canvas = document.getElementById('signature-pad');
