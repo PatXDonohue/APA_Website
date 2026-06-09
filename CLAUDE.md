@@ -24,7 +24,7 @@ The SQLite database (`database/apa.db`) is created and seeded automatically the 
 
 **Two parallel registration flows:**
 - **Full member** (`POST /api/members/register`) creates a user, member, and current-year release row in one transaction. Logs the user in.
-- **Guest** (`POST /api/members/guest`) creates only a `payments` row with `guest_name` set — no user account, no member row. The guest never logs in.
+- **Guest** — the live UI is `views/guest-registration.html` (served at `/guest-registration`; `/guest` redirects to it, and the older `guest.html` is retained but unlinked). It is a **self-contained, multi-step front-end flow** (form → summary → payment → confirmation) where Elavon payment, backend persistence, and the confirmation email are still `TODO` placeholders — so it does **not** currently call the server. The legacy `POST /api/members/guest` endpoint still exists (creates only a `payments` row with `guest_name` — no user or member row) but is no longer wired to any page.
 
 **Payment status drives membership status.** Cards go through `lib/elavon.js` (`MODE=mock` auto-approves; live mode is a stub to fill in). On approval the member's `status` flips to `'Paid'` and `sendWelcomeEmail` fires. Cash/check creates a `Pending` payment row; an admin confirms it via `POST /api/admin/payments/:id/confirm`, which performs the same status flip + welcome email. **The welcome email is the only place lockbox/porta-potty codes are revealed** (from `LOCKBOX_CODE` / `PORTAPOTTY_CODE` env vars in `lib/mailer.js`) — so any new payment confirmation path must also call `sendWelcomeEmail`.
 
@@ -48,5 +48,5 @@ The SQLite database (`database/apa.db`) is created and seeded automatically the 
 
 - **Default admin password (`admin1234`) is in the seed data and README** — never deploy without changing it.
 - The `database/apa.db` file is gitignored along with its `-wal` / `-shm` companions; do not commit them.
-- `views/*.html` files have no shared layout — changes to nav, footer, or `<head>` must be applied to every page.
+- `views/*.html` files have no shared layout — changes to nav, footer, or `<head>` must be applied to every page. The nav is **not byte-identical** across pages, so a blind find/replace will miss or double up: `404.html` has no nav at all, `admin.html`/`dashboard.html` omit the `Join` link, and the `active` class moves per page. Some pages also link to `/register` from the body, not just the nav.
 - The CSV export at `/api/admin/export.csv` is the replacement for the legacy Excel-in-Dropbox workflow described in `Docs/APA_Registration_and_Payment_System.docx`; keep the column set stable so board members can reuse spreadsheet templates.

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register a Guest - APA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="brand"><img class="logo" src="/images/apa-logo.png" alt=""><h1>Abington Pickleball Association</h1></div>
+  </header>
+  <nav class="site-nav" aria-label="Main navigation">
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/register">Join</a></li>
+      <li><a href="/guest-registration" class="active">Guest</a></li>
+      <li><a href="/events">Events</a></li>
+      <li id="nav-login"><a href="/login">Login</a></li>
+      <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
+      <li id="nav-admin" style="display:none"><a href="/admin">Admin</a></li>
+      <li id="nav-logout" style="display:none"><a href="#" id="logout-btn">Log out</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <h1>Register a Guest</h1>
+    <p>Members may register a guest to play for a <strong data-fee>$10.00</strong> fee. The guest must be
+       at least 50 years old and must agree to the liability release below.</p>
+
+    <div class="errors" id="form-errors" style="display:none" role="alert"></div>
+
+    <!-- ================= STEP 1: REGISTRATION FORM ================= -->
+    <section id="step-form">
+      <form id="guest-form" class="card" novalidate>
+        <h2>Member Information</h2>
+        <div class="field"><label for="member_full_name">Member's Full Name</label>
+          <input id="member_full_name" name="member_full_name" required autocomplete="name">
+          <div class="help">The current APA member registering this guest.</div></div>
+
+        <h2>Guest Information</h2>
+        <div class="field"><label for="full_name">Full Name</label>
+          <input id="full_name" name="full_name" required autocomplete="name"></div>
+        <div class="field-row">
+          <div class="field"><label for="date_of_birth">Date of Birth</label>
+            <input id="date_of_birth" name="date_of_birth" type="date" required autocomplete="bday">
+            <div class="help">The guest must be at least 50 years old.</div>
+            <div class="help" id="dob-error" style="color:var(--danger);display:none" role="alert"></div></div>
+          <div class="field"><label for="phone">Phone Number</label>
+            <input id="phone" name="phone" type="tel" required autocomplete="tel" placeholder="(555) 123-4567"></div>
+          <div class="field"><label for="email">Email Address</label>
+            <input id="email" name="email" type="email" required autocomplete="email"></div>
+        </div>
+        <div class="field"><label for="street">Street Address</label>
+          <input id="street" name="street" required autocomplete="street-address"></div>
+        <div class="field-row">
+          <div class="field"><label for="city">City</label>
+            <input id="city" name="city" required autocomplete="address-level2"></div>
+          <div class="field"><label for="state">State</label>
+            <input id="state" name="state" required maxlength="2" autocomplete="address-level1" placeholder="MA"></div>
+          <div class="field"><label for="zip">ZIP</label>
+            <input id="zip" name="zip" required autocomplete="postal-code"></div>
+        </div>
+
+        <h2>Emergency Contact</h2>
+        <div class="field-row">
+          <div class="field"><label for="emergency_contact_name">Full Name</label>
+            <input id="emergency_contact_name" name="emergency_contact_name" required></div>
+          <div class="field"><label for="emergency_contact_relationship">Relationship to Guest</label>
+            <input id="emergency_contact_relationship" name="emergency_contact_relationship" required placeholder="e.g. Spouse, Friend"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="emergency_contact_address">Address</label>
+            <input id="emergency_contact_address" name="emergency_contact_address" required autocomplete="street-address"></div>
+          <div class="field"><label for="emergency_contact_phone">Phone Number</label>
+            <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" required placeholder="(555) 123-4567"></div>
+        </div>
+
+        <h2>Release &amp; Signature</h2>
+        <p class="help">By signing below, the guest agrees to the following release. (Same release used for
+           full membership.)</p>
+        <div class="card" style="background:white">
+          <p style="text-align:center"><strong>Abington Pickleball Association, Inc.</strong><br>
+             Release, Assumption of Risk, and Indemnify Agreement<br>
+             4/1/2026&mdash;3/31/2027</p>
+
+          <p><strong>Release.</strong> In consideration of being permitted to participate in any way in
+             pickleball games sponsored by the Abington Pickleball Association, Inc:</p>
+
+          <p>I for myself, my heirs or assigns, hereby release, waive, and discharge Abington Pickleball
+             Association, Inc., its players, members, volunteers, or any individuals assisting or
+             participating in pickleball, the Abington Senior Center, and the Town of Abington, from any
+             and all claims, rights of action, and causes of action that may have arisen in the past or
+             may arise in the future, directly or indirectly from personal injury, illness, or property
+             damages resulting in the voluntary use of these facilities by me and participants associated
+             with this association, and I covenant not to sue Abington Pickleball Association, Inc., its
+             players, members, volunteers, or any individuals assisting or participating in pickleball, the
+             Abington Senior Center, nor the Town of Abington for such claims, rights of action, and causes
+             of action.</p>
+
+          <p>I also promise to indemnify, defend, and hold harmless the releases against all legal claims
+             and proceedings of any description that may have been asserted in the past, or may be asserted
+             in the future, directly or indirectly, arising from personal injuries, illnesses, or property
+             damage resulting from my participatory, approved use of these town facilities.</p>
+
+          <p><strong>Assumption of Risk.</strong> Participation in the game of pickleball carries with it
+             certain inherent risks that cannot be eliminated regardless of the care taken to avoid harm.
+             The specific risks may vary but include: 1.) minor injuries such as bruises, sprains, and
+             dehydration; 2.) major injuries such as eye, joint, or back injuries, heat stroke, heart attack,
+             and concussion; and 3.) catastrophic injuries such as paralysis and death.</p>
+
+          <p>The Assumption of Risk above also includes being exposed to the COVID-19 Virus and any other
+             illness.</p>
+
+          <p>I have read the previous paragraphs and I know, understand, and appreciate these and other risks
+             that are inherent in playing pickleball. I assert that my participation is voluntary and that I
+             knowingly assume all risks.</p>
+
+          <p><strong>Indemnification and Hold Harmless.</strong> I also agree to indemnify and hold Abington
+             Pickleball Association, Inc., the Abington Senior Center, and the Town of Abington harmless from
+             all claims, actions, suits, costs, expenses, damages, and liabilities, including attorney&rsquo;s
+             fees, brought as a result of my involvement in playing and/or watching pickleball.</p>
+
+          <div class="field"><label for="signature-pad">Guest Signature</label>
+            <div class="sig-wrap">
+              <canvas id="signature-pad" class="signature-pad" aria-label="Guest signs here with mouse or finger"></canvas>
+            </div></div>
+          <p><button type="button" class="btn secondary" id="clear-sig">Clear Signature</button></p>
+          <div class="field"><label for="signed_date">Date</label>
+            <input id="signed_date" name="signed_date" type="date" required></div>
+        </div>
+
+        <p><button type="submit" class="btn" id="to-summary-btn">Continue to Summary</button></p>
+      </form>
+    </section>
+
+    <!-- ================= STEP 2: PRE-PAYMENT SUMMARY ================= -->
+    <section id="step-summary" class="card" style="display:none">
+      <h2>Review &amp; Confirm</h2>
+      <p>Please review before paying the guest fee.</p>
+      <p><strong>Sponsoring Member:</strong> <span id="sum-member"></span></p>
+      <p><strong>Guest:</strong> <span id="sum-guest"></span></p>
+      <p><strong>Amount Due:</strong> <span data-fee>$10.00</span></p>
+      <p>
+        <button type="button" class="btn secondary" id="back-to-form">Back to Form</button>
+        <button type="button" class="btn" id="to-payment-btn">Proceed to Payment</button>
+      </p>
+    </section>
+
+    <!-- ================= STEP 3: PAYMENT (ELAVON PLACEHOLDER) ================= -->
+    <section id="step-payment" class="card" style="display:none">
+      <h2>Pay the Guest Fee</h2>
+      <p><strong>Amount Due:</strong> <span data-fee>$10.00</span></p>
+      <p class="help">Card payments are processed securely through Elavon.</p>
+
+      <!-- TODO: Wire up Elavon payment processing for $10 guest fee.
+           This card form mirrors payments.html. On submit it currently simulates an
+           approved payment so the full flow can be demonstrated. To go live:
+             1. POST the collected guest data + card details to a backend endpoint.
+             2. Charge the card via lib/elavon.js (MODE=mock auto-approves; live is a stub).
+             3. Persist the guest + payment row (see POST /api/members/guest and the
+                payments table), then advance to the confirmation step on approval. -->
+      <form id="payment-form">
+        <div class="field"><label for="name_on_card">Name on Card</label>
+          <input id="name_on_card" name="name_on_card" required autocomplete="cc-name"></div>
+        <div class="field"><label for="card_number">Card Number</label>
+          <input id="card_number" name="card_number" inputmode="numeric" required autocomplete="cc-number" placeholder="0000 0000 0000 0000"></div>
+        <div class="field-row">
+          <div class="field"><label for="card_exp">Expiration (MM/YY)</label>
+            <input id="card_exp" name="card_exp" required autocomplete="cc-exp" placeholder="MM/YY"></div>
+          <div class="field"><label for="card_cvv">CVV</label>
+            <input id="card_cvv" name="card_cvv" inputmode="numeric" required autocomplete="cc-csc"></div>
+        </div>
+        <p>
+          <button type="button" class="btn secondary" id="back-to-summary">Back</button>
+          <button type="submit" class="btn">Pay <span data-fee>$10.00</span></button>
+        </p>
+      </form>
+    </section>
+
+    <!-- ================= STEP 4: CONFIRMATION ================= -->
+    <section id="step-confirmation" style="display:none">
+      <div class="notice" role="status">
+        <strong>Guest registration complete.</strong> The guest fee has been paid and the release is on file.
+        <!-- TODO: Send a confirmation email to the member and/or guest once Elavon is live
+             (reuse lib/mailer.js). The welcome email is also where lockbox/porta-potty codes
+             are revealed for full members — decide whether guests should receive any codes. -->
+      </div>
+      <section class="card">
+        <h2>Registration Summary</h2>
+        <p><strong>Sponsoring Member:</strong> <span id="cf-member"></span></p>
+        <p><strong>Guest:</strong> <span id="cf-guest"></span></p>
+        <p><strong>Date of Birth:</strong> <span id="cf-dob"></span></p>
+        <p><strong>Address:</strong> <span id="cf-address"></span></p>
+        <p><strong>Email:</strong> <span id="cf-email"></span></p>
+        <p><strong>Phone:</strong> <span id="cf-phone"></span></p>
+        <p><strong>Emergency Contact:</strong> <span id="cf-ec"></span></p>
+        <p><strong>Emergency Contact Address:</strong> <span id="cf-ec-address"></span></p>
+        <p><strong>Release Signed:</strong> <span id="cf-signed"></span></p>
+        <p><strong>Amount Paid:</strong> <span data-fee>$10.00</span></p>
+        <p><a class="btn" href="/">Done</a></p>
+      </section>
+    </section>
+  </main>
+
+  <footer><p>Questions? Email <a href="mailto:abingtonpickleball@gmail.com">abingtonpickleball@gmail.com</a></p></footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await APA.apiFetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+
+    // Guest fee: read the existing read-only pricing endpoint; fall back to $10.00.
+    let guestFeeCents = 1000;
+    (async () => {
+      try {
+        const { ok, data } = await APA.apiFetch('/api/payments/pricing');
+        if (ok && data && data.guest_fee_cents) guestFeeCents = data.guest_fee_cents;
+      } catch (_) { /* keep fallback */ }
+      document.querySelectorAll('[data-fee]').forEach(el => { el.textContent = APA.formatMoney(guestFeeCents); });
+    })();
+
+    // ---- Multi-step navigation (form -> summary -> payment -> confirmation) ----
+    const STEPS = ['form', 'summary', 'payment', 'confirmation'];
+    function showStep(name) {
+      STEPS.forEach(s => {
+        document.getElementById('step-' + s).style.display = (s === name) ? 'block' : 'none';
+      });
+      window.scrollTo(0, 0);
+    }
+
+    // ---- Signature pad with HiDPI handling (matches register.html) ----
+    const canvas = document.getElementById('signature-pad');
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext('2d').scale(ratio, ratio);
+      pad.clear();
+    }
+    const pad = new SignaturePad(canvas, { penColor: '#1a1a1a' });
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    document.getElementById('clear-sig').addEventListener('click', () => pad.clear());
+    document.getElementById('signed_date').valueAsDate = new Date();
+
+    // ---- Date of birth: guest must be at least 50 ----
+    function ageFromDob(dob) {
+      const b = new Date(dob);
+      if (isNaN(b)) return -1;
+      const t = new Date();
+      let a = t.getFullYear() - b.getFullYear();
+      const m = t.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a -= 1;
+      return a;
+    }
+    const dobInput = document.getElementById('date_of_birth');
+    const dobError = document.getElementById('dob-error');
+    const toSummaryBtn = document.getElementById('to-summary-btn');
+    const maxDob = new Date();
+    maxDob.setFullYear(maxDob.getFullYear() - 50);
+    dobInput.max = maxDob.toISOString().slice(0, 10);
+    function validateDob() {
+      if (!dobInput.value) { dobError.style.display = 'none'; toSummaryBtn.disabled = false; return; }
+      const age = ageFromDob(dobInput.value);
+      if (age < 0) {
+        dobError.textContent = 'Please enter a valid date.';
+        dobError.style.display = 'block'; toSummaryBtn.disabled = true;
+      } else if (age < 50) {
+        dobError.textContent = 'The guest must be at least 50 years old to play.';
+        dobError.style.display = 'block'; toSummaryBtn.disabled = true;
+      } else {
+        dobError.style.display = 'none'; toSummaryBtn.disabled = false;
+      }
+    }
+    dobInput.addEventListener('blur', validateDob);
+    dobInput.addEventListener('input', validateDob);
+
+    // ---- Field validators ----
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    function validPhone(v) {
+      const digits = String(v).replace(/\D/g, '');
+      return digits.length === 10 || (digits.length === 11 && digits[0] === '1');
+    }
+
+    let collected = null; // latest validated form data, used for summary + confirmation
+
+    document.getElementById('guest-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      const errors = [];
+      for (const [k, v] of Object.entries(data)) {
+        if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
+      }
+      if (data.email && !EMAIL_RE.test(data.email)) errors.push('Please enter a valid email address.');
+      if (data.phone && !validPhone(data.phone)) errors.push('Please enter a valid guest phone number.');
+      if (data.emergency_contact_phone && !validPhone(data.emergency_contact_phone)) {
+        errors.push('Please enter a valid emergency contact phone number.');
+      }
+      if (data.date_of_birth) {
+        const age = ageFromDob(data.date_of_birth);
+        if (age < 0) errors.push('Please enter a valid date of birth.');
+        else if (age < 50) errors.push('The guest must be at least 50 years old to play.');
+      }
+      // Waiver acceptance is required before the payment step can proceed.
+      if (pad.isEmpty()) errors.push('Please sign the release in the signature box.');
+
+      if (errors.length) { APA.showErrors('form-errors', errors); window.scrollTo(0, 0); return; }
+      APA.showErrors('form-errors', null);
+
+      data.signature_data = pad.toDataURL('image/png');
+      collected = data;
+
+      document.getElementById('sum-member').textContent = data.member_full_name;
+      document.getElementById('sum-guest').textContent = data.full_name;
+      showStep('summary');
+    });
+
+    document.getElementById('back-to-form').addEventListener('click', () => showStep('form'));
+    document.getElementById('to-payment-btn').addEventListener('click', () => showStep('payment'));
+    document.getElementById('back-to-summary').addEventListener('click', () => showStep('summary'));
+
+    // ---- Payment step (PLACEHOLDER — see TODO in the markup above) ----
+    document.getElementById('payment-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      // TODO: Replace this simulated approval with a real Elavon charge + backend persistence.
+      const d = collected || {};
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
+      set('cf-member', d.member_full_name);
+      set('cf-guest', d.full_name);
+      set('cf-dob', d.date_of_birth);
+      set('cf-address', `${d.street}, ${d.city}, ${d.state} ${d.zip}`);
+      set('cf-email', d.email);
+      set('cf-phone', d.phone);
+      set('cf-ec', `${d.emergency_contact_name} (${d.emergency_contact_relationship}) — ${d.emergency_contact_phone}`);
+      set('cf-ec-address', d.emergency_contact_address);
+      set('cf-signed', d.signed_date);
+      showStep('confirmation');
+    });
+  </script>
+</body>
+</html>

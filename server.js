@@ -75,7 +75,9 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
 });
-app.get('/guest', sendView('guest.html'));
+app.get('/guest-registration', sendView('guest-registration.html'));
+// Old simplified guest form is superseded by /guest-registration; keep the path working.
+app.get('/guest', (req, res) => res.redirect('/guest-registration'));
 app.get('/payments', sendView('payments.html'));
 app.get('/events', sendView('events.html'));
 app.get('/admin', (req, res) => {
