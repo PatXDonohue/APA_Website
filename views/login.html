@@ -15,7 +15,7 @@
       <li><a href="/">Home</a></li>
       <li><a href="/about">About</a></li>
       <li><a href="/register">Join</a></li>
-      <li><a href="/guest-registration">Guest</a></li>
+      <li id="nav-guest" style="display:none"><a href="/guest-registration">Guest</a></li>
       <li><a href="/events">Events</a></li>
       <li id="nav-login"><a href="/login" class="active">Login</a></li>
       <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
@@ -25,6 +25,7 @@
   </nav>
   <main id="main">
     <h1>Member Login</h1>
+    <div class="notice" id="login-msg" style="display:none" role="status"></div>
     <div class="errors" id="login-errors" style="display:none" role="alert"></div>
     <form id="login-form" class="card" style="max-width:500px">
       <div class="field"><label for="username">Username</label>
@@ -43,6 +44,14 @@
       await APA.apiFetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/';
     });
+    // Show a contextual message when redirected here (e.g. from a member-only page)
+    const msg = new URLSearchParams(location.search).get('msg');
+    if (msg) {
+      const el = document.getElementById('login-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;

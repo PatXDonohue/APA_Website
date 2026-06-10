@@ -162,12 +162,25 @@ router.post('/renew', (req, res) => {
   res.json({ ok: true, message: 'Renewal received. Please complete payment to activate.' });
 });
 
-// Guest registration - simplified
+// Guest registration - a logged-in member registers a guest (50+) and pays the guest fee.
 router.post('/guest', (req, res) => {
+  // Login-gated: the sponsoring member comes from the session, never the client.
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Please log in to register a guest.' });
+  }
+  const member = db
+    .prepare('SELECT id, full_name FROM members WHERE user_id = ?')
+    .get(req.session.user.id);
+  if (!member) {
+    return res.status(403).json({ error: 'Your account has no member profile, so guest registration is not available.' });
+  }
+
   const b = req.body || {};
-  const required = ['full_name', 'date_of_birth', 'phone', 'email',
-                    'emergency_contact_name', 'emergency_contact_phone',
-                    'signature_data', 'signed_date'];
+  const required = [
+    'full_name', 'date_of_birth', 'street', 'city', 'state', 'zip', 'email', 'phone',
+    'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_address',
+    'emergency_contact_phone', 'signature_data', 'signed_date',
+  ];
   const errors = [];
   for (const f of required) {
     if (!b[f] || String(b[f]).trim() === '') {
@@ -177,16 +190,44 @@ router.post('/guest', (req, res) => {
   const age = ageFromDob(b.date_of_birth);
   if (age < 0) errors.push('Date of birth is not a valid date.');
   else if (age < 50) errors.push('Guests must be at least 50 years old.');
+  if (b.signature_data && !String(b.signature_data).startsWith('data:image/')) {
+    errors.push('Digital signature is missing or invalid.');
+  }
   if (errors.length) return res.status(400).json({ errors });
 
-  // Guests are recorded as a payment row with guest_name; no user account
   const guestFee = parseInt(getSetting('guest_fee_cents', '1000'), 10);
-  const payId = db
-    .prepare(`INSERT INTO payments (guest_name, amount_cents, purpose, method, status)
-              VALUES (?, ?, 'guest', 'cash', 'Pending')`)
-    .run(b.full_name, guestFee).lastInsertRowid;
 
-  res.json({ ok: true, payment_id: payId, message: 'Guest registration received. Please complete payment.' });
+  const result = db.transaction(() => {
+    const guestId = db
+      .prepare(`INSERT INTO guests
+        (sponsoring_member_id, sponsoring_member_name, full_name, date_of_birth, street, city, state, zip,
+         email, phone, emergency_contact_name, emergency_contact_relationship, emergency_contact_address,
+         emergency_contact_phone, signature_data, signed_date, waiver_accepted)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`)
+      .run(
+        member.id, member.full_name, b.full_name, b.date_of_birth, b.street, b.city, b.state, b.zip,
+        b.email, b.phone, b.emergency_contact_name, b.emergency_contact_relationship, b.emergency_contact_address,
+        b.emergency_contact_phone, b.signature_data, b.signed_date
+      ).lastInsertRowid;
+
+    // Pending guest-fee payment. member_id is left NULL so confirming this payment never
+    // flips the sponsoring member's membership status (admin confirm only acts on purpose='membership').
+    const payId = db
+      .prepare(`INSERT INTO payments (guest_id, guest_name, amount_cents, purpose, method, status)
+                VALUES (?, ?, ?, 'guest', 'card', 'Pending')`)
+      .run(guestId, b.full_name, guestFee).lastInsertRowid;
+
+    // TODO: Elavon write-back — once live, on a successful charge update this row:
+    //   UPDATE payments SET status='Paid', reference=<elavon txn id>, confirmed_at=datetime('now') WHERE id = payId
+    return { guestId, payId };
+  })();
+
+  res.json({
+    ok: true,
+    guest_id: result.guestId,
+    payment_id: result.payId,
+    message: 'Guest registration saved. Please complete payment.',
+  });
 });
 
 // Self-service: my profile

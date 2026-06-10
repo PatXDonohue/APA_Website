@@ -42,16 +42,19 @@ async function updateNavForSession() {
   const dashLink = document.getElementById('nav-dashboard');
   const adminLink = document.getElementById('nav-admin');
   const logoutBtn = document.getElementById('nav-logout');
+  const guestLink = document.getElementById('nav-guest'); // guest registration is member-only
   if (!data) return;
   if (data.user) {
     if (loginLink) loginLink.style.display = 'none';
     if (dashLink)  dashLink.style.display = 'block';
     if (logoutBtn) logoutBtn.style.display = 'block';
+    if (guestLink) guestLink.style.display = 'block';
     if (adminLink && data.user.role === 'admin') adminLink.style.display = 'block';
   } else {
     if (dashLink) dashLink.style.display = 'none';
     if (adminLink) adminLink.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'none';
+    if (guestLink) guestLink.style.display = 'none';
   }
 }
 

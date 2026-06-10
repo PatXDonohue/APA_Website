@@ -75,7 +75,14 @@ app.get('/dashboard', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
 });
-app.get('/guest-registration', sendView('guest-registration.html'));
+// Guest registration is member-only: a logged-in member registers a guest.
+app.get('/guest-registration', (req, res) => {
+  if (!req.session.user) {
+    const msg = encodeURIComponent('Please log in to register a guest.');
+    return res.redirect(`/login?next=/guest-registration&msg=${msg}`);
+  }
+  res.sendFile(path.join(__dirname, 'views', 'guest-registration.html'));
+});
 // Old simplified guest form is superseded by /guest-registration; keep the path working.
 app.get('/guest', (req, res) => res.redirect('/guest-registration'));
 app.get('/payments', sendView('payments.html'));

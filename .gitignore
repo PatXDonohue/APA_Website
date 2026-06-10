@@ -7,3 +7,4 @@ database/apa.db-wal
 npm-debug.log*
 Docs/APA Release 2026.pdf
 Docs/Render_NPM_error.txt
+Docs/guest-registration-login-prompt.md

@@ -10,7 +10,7 @@ and Node.js + Express + SQLite on the backend.
 - Member registration with electronic Release form and digital signature
 - Age 50+ validation, configurable non-resident member cap
 - Returning member login, dashboard, and renewal (pre-populated from prior year)
-- Guest registration (simplified Release)
+- Member-only guest registration: a logged-in member registers a 50+ guest (full Release + signature, $10 fee), recorded in the database
 - Payments: credit/debit via Elavon (mock by default), or cash/check (admin-confirmed)
 - Confirmation email with lockbox / porta-potty codes after payment
 - Admin dashboard: confirm payments, CSV export, broadcast emails, view releases,
@@ -28,7 +28,7 @@ and Node.js + Express + SQLite on the backend.
 ## Setup
 
 ```bash
-# 1. Install dependencies (requires Node 18+)
+# 1. Install dependencies (requires Node 22.x — pinned in package.json "engines")
 npm install
 
 # 2. Copy env template (optional — defaults work for dev)
@@ -125,7 +125,7 @@ APA_Website/
     ├── register.html
     ├── login.html
     ├── dashboard.html
-    ├── guest.html
+    ├── guest-registration.html
     ├── payments.html
     ├── events.html
     ├── admin.html
@@ -137,5 +137,5 @@ APA_Website/
 - Lockbox / porta-potty passcodes are read from env vars (`LOCKBOX_CODE`,
   `PORTAPOTTY_CODE`) and only sent in the welcome email *after* payment is
   confirmed.
-- Signatures are stored as base64 PNG in the `releases` table.
+- Signatures are stored as base64 PNG in the `releases` table (members) and the `guests` table (guests).
 - The admin CSV export replaces the previous Excel spreadsheet workflow.

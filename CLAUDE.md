@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm install          # install dependencies (Node 18+)
+npm install          # install dependencies (Node 22.x — pinned in package.json "engines")
 npm start            # run server on http://localhost:3000
 npm run init-db      # explicitly run database init (also runs automatically on first server start)
 ```
@@ -24,7 +24,7 @@ The SQLite database (`database/apa.db`) is created and seeded automatically the 
 
 **Two parallel registration flows:**
 - **Full member** (`POST /api/members/register`) creates a user, member, and current-year release row in one transaction. Logs the user in.
-- **Guest** — the live UI is `views/guest-registration.html` (served at `/guest-registration`; `/guest` redirects to it, and the older `guest.html` is retained but unlinked). It is a **self-contained, multi-step front-end flow** (form → summary → payment → confirmation) where Elavon payment, backend persistence, and the confirmation email are still `TODO` placeholders — so it does **not** currently call the server. The legacy `POST /api/members/guest` endpoint still exists (creates only a `payments` row with `guest_name` — no user or member row) but is no longer wired to any page.
+- **Guest** (`POST /api/members/guest`) is **member-only**: a logged-in member registers a guest via `views/guest-registration.html` (served at `/guest-registration`, which redirects to `/login?next=…&msg=…` when unauthenticated; the legacy `/guest` path redirects here for any old bookmarks). The "Guest" nav link is hidden for logged-out visitors (toggled in `app.js` via `#nav-guest`) and surfaced on the dashboard. The **sponsoring member is taken from the session, never the client** (the read-only Member Name field is display-only). On the multi-step page (form → summary → payment → confirmation), submitting the form persists a `guests` row + a `Pending`, `purpose='guest'` `payments` row in one transaction (`guest_id` set; `member_id` left NULL so admin confirm — which only acts on `purpose='membership'` — never flips the sponsoring member's status). The card payment step is still an Elavon `TODO` that simulates approval; the write-back to flip the payment to `Paid` is marked in both the page and the route. The new `guests` table is a `releases`-style snapshot (full guest + emergency contact + signature); see `schema.sql`.
 
 **Payment status drives membership status.** Cards go through `lib/elavon.js` (`MODE=mock` auto-approves; live mode is a stub to fill in). On approval the member's `status` flips to `'Paid'` and `sendWelcomeEmail` fires. Cash/check creates a `Pending` payment row; an admin confirms it via `POST /api/admin/payments/:id/confirm`, which performs the same status flip + welcome email. **The welcome email is the only place lockbox/porta-potty codes are revealed** (from `LOCKBOX_CODE` / `PORTAPOTTY_CODE` env vars in `lib/mailer.js`) — so any new payment confirmation path must also call `sendWelcomeEmail`.
 

@@ -17,7 +17,7 @@
       <li><a href="/">Home</a></li>
       <li><a href="/about">About</a></li>
       <li><a href="/register">Join</a></li>
-      <li><a href="/guest-registration" class="active">Guest</a></li>
+      <li id="nav-guest" style="display:none"><a href="/guest-registration" class="active">Guest</a></li>
       <li><a href="/events">Events</a></li>
       <li id="nav-login"><a href="/login">Login</a></li>
       <li id="nav-dashboard" style="display:none"><a href="/dashboard">My Account</a></li>
@@ -38,8 +38,8 @@
       <form id="guest-form" class="card" novalidate>
         <h2>Member Information</h2>
         <div class="field"><label for="member_full_name">Member's Full Name</label>
-          <input id="member_full_name" name="member_full_name" required autocomplete="name">
-          <div class="help">The current APA member registering this guest.</div></div>
+          <input id="member_full_name" name="member_full_name" required readonly autocomplete="name">
+          <div class="help">Auto-filled from your member profile.</div></div>
 
         <h2>Guest Information</h2>
         <div class="field"><label for="full_name">Full Name</label>
@@ -226,6 +226,24 @@
       document.querySelectorAll('[data-fee]').forEach(el => { el.textContent = APA.formatMoney(guestFeeCents); });
     })();
 
+    // Member-only page: auto-fill the sponsoring member's name from their profile.
+    // The server independently derives the member from the session, so this field is display-only.
+    (async () => {
+      const { ok, data } = await APA.apiFetch('/api/members/me');
+      if (!ok || !data || !data.user) {
+        window.location.href = '/login?next=/guest-registration&msg=' +
+          encodeURIComponent('Please log in to register a guest.');
+        return;
+      }
+      if (!data.member) {
+        APA.showErrors('form-errors',
+          ['Your account has no member profile, so guest registration is not available.']);
+        document.getElementById('to-summary-btn').disabled = true;
+        return;
+      }
+      document.getElementById('member_full_name').value = data.member.full_name;
+    })();
+
     // ---- Multi-step navigation (form -> summary -> payment -> confirmation) ----
     const STEPS = ['form', 'summary', 'payment', 'confirmation'];
     function showStep(name) {
@@ -289,9 +307,10 @@
       return digits.length === 10 || (digits.length === 11 && digits[0] === '1');
     }
 
-    let collected = null; // latest validated form data, used for summary + confirmation
+    let collected = null;        // latest validated form data, used for summary + confirmation
+    let guestPaymentId = null;   // id of the pending payment row; used by the (TODO) Elavon write-back
 
-    document.getElementById('guest-form').addEventListener('submit', (e) => {
+    document.getElementById('guest-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target).entries());
       const errors = [];
@@ -315,7 +334,17 @@
       APA.showErrors('form-errors', null);
 
       data.signature_data = pad.toDataURL('image/png');
+
+      // Persist now: create the guest record + a pending $10 payment. The sponsoring member is
+      // taken from the session server-side, so the read-only member_full_name field is not trusted.
+      const { ok, data: resp } = await APA.apiFetch('/api/members/guest', { method: 'POST', body: data });
+      if (!ok) {
+        APA.showErrors('form-errors', resp.errors || resp.error || 'Could not save the registration.');
+        window.scrollTo(0, 0);
+        return;
+      }
       collected = data;
+      guestPaymentId = resp.payment_id;
 
       document.getElementById('sum-member').textContent = data.member_full_name;
       document.getElementById('sum-guest').textContent = data.full_name;
@@ -329,7 +358,9 @@
     // ---- Payment step (PLACEHOLDER — see TODO in the markup above) ----
     document.getElementById('payment-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      // TODO: Replace this simulated approval with a real Elavon charge + backend persistence.
+      // TODO: Elavon — charge the card, then write back to the pending payment created at form submit
+      //   (id = `guestPaymentId`): on approval the server sets payments.status='Paid' and records the
+      //   Elavon reference. For now we simulate an approved payment and show the confirmation summary.
       const d = collected || {};
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || ''; };
       set('cf-member', d.member_full_name);

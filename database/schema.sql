@@ -49,9 +49,33 @@ CREATE TABLE IF NOT EXISTS releases (
   UNIQUE (member_id, year)
 );
 
+-- Guests are registered by a logged-in member; one row per guest registration (snapshot, like releases)
+CREATE TABLE IF NOT EXISTS guests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sponsoring_member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  sponsoring_member_name TEXT NOT NULL, -- snapshot of the member's name at registration time
+  full_name TEXT NOT NULL,
+  date_of_birth TEXT NOT NULL,
+  street TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  emergency_contact_name TEXT NOT NULL,
+  emergency_contact_relationship TEXT NOT NULL,
+  emergency_contact_address TEXT NOT NULL,
+  emergency_contact_phone TEXT NOT NULL,
+  signature_data TEXT NOT NULL, -- base64 PNG data URI; the waiver acceptance proof
+  signed_date TEXT NOT NULL,
+  waiver_accepted INTEGER NOT NULL DEFAULT 0, -- set to 1 once the release is signed
+  created_at TEXT NOT NULL DEFAULT (datetime('now')) -- registration date
+);
+
 CREATE TABLE IF NOT EXISTS payments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   member_id INTEGER REFERENCES members(id) ON DELETE SET NULL,
+  guest_id INTEGER REFERENCES guests(id) ON DELETE SET NULL, -- links a guest-fee payment to its guest record
   guest_name TEXT, -- for guest payments without a member account
   amount_cents INTEGER NOT NULL,
   purpose TEXT NOT NULL, -- 'membership' | 'guest' | 'tournament' | 'social'
