@@ -2,8 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
+const SqliteStore = require('better-sqlite3-session-store')(session);
 
-require('./database/db'); // initializes + seeds
+const { db } = require('./database/db'); // initializes + seeds
 
 const authRoutes = require('./routes/auth');
 const memberRoutes = require('./routes/members');
@@ -21,6 +22,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
   session({
+    store: new SqliteStore({
+      client: db,
+      // prune expired rows hourly so the sessions table doesn't grow unbounded
+      expired: { clear: true, intervalMs: 1000 * 60 * 60 },
+    }),
     secret: process.env.SESSION_SECRET || 'apa-dev-secret-change-me',
     resave: false,
     saveUninitialized: false,
@@ -107,7 +113,6 @@ app.get('/api/session', (req, res) => {
 });
 
 // Announcements (read-only) for the homepage
-const { db } = require('./database/db');
 app.get('/api/announcements', (req, res) => {
   const rows = db.prepare('SELECT id, title, body, posted_at FROM announcements ORDER BY posted_at DESC LIMIT 10').all();
   res.json({ announcements: rows });
