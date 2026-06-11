@@ -4,7 +4,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL, -- intentionally NOT unique: members (e.g. a couple) may share an email; login is by username
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'member', -- 'member' | 'admin'
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

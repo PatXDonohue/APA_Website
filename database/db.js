@@ -15,6 +15,48 @@ function init() {
   db.exec(schema);
 }
 
+// Idempotent migrations for already-deployed databases. `init()` only runs
+// CREATE TABLE IF NOT EXISTS, so existing tables are never altered by schema.sql
+// changes — schema-shape changes have to be applied here.
+function migrate() {
+  // Drop the legacy UNIQUE constraint on users.email (members may share an email; login is by
+  // username). SQLite can't ALTER away a column constraint, so rebuild the table per the
+  // documented 12-step procedure. No-op on fresh DBs (already created without UNIQUE) and on
+  // already-migrated DBs.
+  const usersSql = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'")
+    .get();
+  if (usersSql && /email\b[^,]*\bUNIQUE\b/i.test(usersSql.sql)) {
+    // foreign_keys must be toggled outside the transaction (the pragma is a no-op mid-transaction).
+    db.pragma('foreign_keys = OFF');
+    try {
+      db.transaction(() => {
+        db.exec(`
+          CREATE TABLE users_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'member',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+          );
+          INSERT INTO users_new (id, username, email, password_hash, role, created_at)
+            SELECT id, username, email, password_hash, role, created_at FROM users;
+          DROP TABLE users;
+          ALTER TABLE users_new RENAME TO users;
+        `);
+      })();
+      const violations = db.pragma('foreign_key_check');
+      if (violations.length) {
+        throw new Error('foreign_key_check failed after users.email migration: ' + JSON.stringify(violations));
+      }
+      console.log('[migration] Removed UNIQUE constraint on users.email');
+    } finally {
+      db.pragma('foreign_keys = ON');
+    }
+  }
+}
+
 function seedIfEmpty() {
   const userCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
   if (userCount > 0) return;
@@ -109,6 +151,7 @@ function setSetting(key, value) {
 }
 
 init();
+migrate();
 seedIfEmpty();
 
 module.exports = { db, getSetting, setSetting };

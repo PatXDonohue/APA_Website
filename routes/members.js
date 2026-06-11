@@ -64,11 +64,12 @@ router.post('/register', (req, res) => {
     }
   }
 
+  // Email is intentionally not unique (members may share one); only the username must be free.
   const existing = db
-    .prepare('SELECT id FROM users WHERE username = ? OR email = ?')
-    .get(b.username, b.email);
+    .prepare('SELECT id FROM users WHERE username = ?')
+    .get(b.username);
   if (existing) {
-    return res.status(400).json({ errors: ['That username or email is already registered.'] });
+    return res.status(400).json({ errors: ['That username is already taken. Please choose another.'] });
   }
 
   const hash = bcrypt.hashSync(b.password, 10);
