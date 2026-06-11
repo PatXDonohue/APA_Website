@@ -45,7 +45,7 @@
         <div class="field"><label for="full_name">Full Name</label><input id="full_name" name="full_name" required></div>
         <div class="field-row">
           <div class="field"><label for="date_of_birth">Date of Birth</label><input id="date_of_birth" name="date_of_birth" type="date" required></div>
-          <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" required></div>
+          <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" required></div>
           <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
         </div>
         <div class="field"><label for="street">Street</label><input id="street" name="street" required></div>
@@ -61,7 +61,7 @@
           </select></div>
         <div class="field-row">
           <div class="field"><label for="emergency_contact_name">Emergency Contact Name</label><input id="emergency_contact_name" name="emergency_contact_name" required></div>
-          <div class="field"><label for="emergency_contact_phone">Emergency Contact Phone</label><input id="emergency_contact_phone" name="emergency_contact_phone" required></div>
+          <div class="field"><label for="emergency_contact_phone">Emergency Contact Phone</label><input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" required></div>
         </div>
 
         <h3>Re-sign Release</h3>
@@ -113,7 +113,7 @@
         <p><strong>${APA.escapeHtml(m.full_name)}</strong></p>
         <p>Status: ${statusPill(m.status)}</p>
         <p>${APA.escapeHtml(m.street)}, ${APA.escapeHtml(m.city)}, ${APA.escapeHtml(m.state)} ${APA.escapeHtml(m.zip)}</p>
-        <p>Residency: ${APA.escapeHtml(m.residency)} &middot; Phone: ${APA.escapeHtml(m.phone)}</p>
+        <p>Residency: ${APA.escapeHtml(m.residency)} &middot; Phone: ${APA.escapeHtml(APA.formatPhone(m.phone) || m.phone)}</p>
         ${m.status !== 'Paid' ? '<p><a class="btn" href="/payments?purpose=membership">Pay Dues</a></p>' : ''}
       `;
       // Prefill renewal form
@@ -121,7 +121,8 @@
       for (const f of fields) {
         const el = document.getElementById(f);
         if (!el) continue;
-        el.value = (r && r[f]) || (m && m[f]) || '';
+        const raw = (r && r[f]) || (m && m[f]) || '';
+        el.value = el.type === 'tel' ? APA.formatPhone(raw) : raw;
       }
       resize();
     }
@@ -134,8 +135,12 @@
       for (const [k, v] of Object.entries(data)) {
         if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
       }
+      errors.push(...APA.validatePhones(e.target));
       if (pad.isEmpty()) errors.push('Please sign in the signature box.');
       if (errors.length) { APA.showErrors('renew-errors', errors); return; }
+      // Submit phone numbers as raw 10-digit strings.
+      data.phone = APA.phoneDigits(data.phone);
+      data.emergency_contact_phone = APA.phoneDigits(data.emergency_contact_phone);
       data.signature_data = pad.toDataURL('image/png');
       const { ok, data: resp } = await APA.apiFetch('/api/members/renew', { method: 'POST', body: data });
       if (!ok) { APA.showErrors('renew-errors', resp.errors || resp.error || 'Renewal failed.'); return; }

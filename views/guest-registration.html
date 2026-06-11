@@ -302,10 +302,6 @@
 
     // ---- Field validators ----
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    function validPhone(v) {
-      const digits = String(v).replace(/\D/g, '');
-      return digits.length === 10 || (digits.length === 11 && digits[0] === '1');
-    }
 
     let collected = null;        // latest validated form data, used for summary + confirmation
     let guestPaymentId = null;   // id of the pending payment row; used by the (TODO) Elavon write-back
@@ -318,10 +314,7 @@
         if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
       }
       if (data.email && !EMAIL_RE.test(data.email)) errors.push('Please enter a valid email address.');
-      if (data.phone && !validPhone(data.phone)) errors.push('Please enter a valid guest phone number.');
-      if (data.emergency_contact_phone && !validPhone(data.emergency_contact_phone)) {
-        errors.push('Please enter a valid emergency contact phone number.');
-      }
+      errors.push(...APA.validatePhones(e.target));
       if (data.date_of_birth) {
         const age = ageFromDob(data.date_of_birth);
         if (age < 0) errors.push('Please enter a valid date of birth.');
@@ -333,6 +326,9 @@
       if (errors.length) { APA.showErrors('form-errors', errors); window.scrollTo(0, 0); return; }
       APA.showErrors('form-errors', null);
 
+      // Submit phone numbers as raw 10-digit strings.
+      data.phone = APA.phoneDigits(data.phone);
+      data.emergency_contact_phone = APA.phoneDigits(data.emergency_contact_phone);
       data.signature_data = pad.toDataURL('image/png');
 
       // Persist now: create the guest record + a pending $10 payment. The sponsoring member is
@@ -368,8 +364,8 @@
       set('cf-dob', d.date_of_birth);
       set('cf-address', `${d.street}, ${d.city}, ${d.state} ${d.zip}`);
       set('cf-email', d.email);
-      set('cf-phone', d.phone);
-      set('cf-ec', `${d.emergency_contact_name} (${d.emergency_contact_relationship}) — ${d.emergency_contact_phone}`);
+      set('cf-phone', APA.formatPhone(d.phone));
+      set('cf-ec', `${d.emergency_contact_name} (${d.emergency_contact_relationship}) — ${APA.formatPhone(d.emergency_contact_phone)}`);
       set('cf-ec-address', d.emergency_contact_address);
       set('cf-signed', d.signed_date);
       showStep('confirmation');

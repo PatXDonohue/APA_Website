@@ -193,6 +193,7 @@
       for (const [k, v] of Object.entries(data)) {
         if (!String(v).trim()) errors.push(`Please fill in ${k.replace(/_/g, ' ')}.`);
       }
+      errors.push(...APA.validatePhones(form));
       if (data.date_of_birth) {
         const age = ageFromDob(data.date_of_birth);
         if (age < 50) errors.push('You must be at least 50 years old to join.');
@@ -201,6 +202,9 @@
 
       if (errors.length) { APA.showErrors('form-errors', errors); window.scrollTo(0, 0); return; }
 
+      // Submit phone numbers as raw 10-digit strings.
+      data.phone = APA.phoneDigits(data.phone);
+      data.emergency_contact_phone = APA.phoneDigits(data.emergency_contact_phone);
       data.signature_data = pad.toDataURL('image/png');
       const { ok, data: resp } = await APA.apiFetch('/api/members/register', { method: 'POST', body: data });
       if (!ok) { APA.showErrors('form-errors', resp.errors || resp.error || 'Registration failed.'); window.scrollTo(0, 0); return; }
