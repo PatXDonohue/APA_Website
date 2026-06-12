@@ -130,6 +130,10 @@ function seedIfEmpty() {
   insertSetting.run('annual_dues_cents', '5000');
   insertSetting.run('guest_fee_cents', '1000');
   insertSetting.run('card_fee_percent', '3');
+  // Membership renewal window (month/day; may span the year end). See lib/renewal.js.
+  insertSetting.run('renewal_start_md', '11-01');
+  insertSetting.run('renewal_end_md', '01-31');
+  insertSetting.run('renewal_override', 'auto'); // 'auto' | 'on' | 'off'
 
   insertAnnouncement.run(
     'Welcome to the new APA website!',

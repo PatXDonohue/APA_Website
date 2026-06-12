@@ -1,6 +1,7 @@
 const express = require('express');
 const { db, getSetting, setSetting } = require('../database/db');
 const { sendMail, sendWelcomeEmail } = require('../lib/mailer');
+const { getRenewalStatus, getRenewalConfig, parseMd } = require('../lib/renewal');
 
 const router = express.Router();
 
@@ -109,6 +110,26 @@ router.post('/settings', (req, res) => {
   if (!key) return res.status(400).json({ error: 'Setting key required.' });
   setSetting(key, value);
   res.json({ ok: true });
+});
+
+// Membership renewal window configuration (admin-only via the router.use gate above).
+router.get('/renewal-settings', (req, res) => {
+  res.json({ config: getRenewalConfig(), status: getRenewalStatus() });
+});
+
+router.post('/renewal-settings', (req, res) => {
+  const b = req.body || {};
+  const errors = [];
+  if (!parseMd(b.start)) errors.push('Start date must be a valid month and day.');
+  if (!parseMd(b.end)) errors.push('End date must be a valid month and day.');
+  const override = ['auto', 'on', 'off'].includes(b.override) ? b.override : null;
+  if (!override) errors.push('Override must be Automatic, Force Open, or Force Closed.');
+  if (errors.length) return res.status(400).json({ errors });
+
+  setSetting('renewal_start_md', b.start);
+  setSetting('renewal_end_md', b.end);
+  setSetting('renewal_override', override);
+  res.json({ ok: true, config: getRenewalConfig(), status: getRenewalStatus() });
 });
 
 module.exports = router;

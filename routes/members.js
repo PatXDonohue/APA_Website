@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { db, getSetting } = require('../database/db');
 const { sendWelcomeEmail } = require('../lib/mailer');
+const { getRenewalStatus } = require('../lib/renewal');
 
 const router = express.Router();
 
@@ -118,11 +119,21 @@ router.get('/renewal-data', (req, res) => {
   const latest = db
     .prepare('SELECT * FROM releases WHERE member_id = ? ORDER BY year DESC LIMIT 1')
     .get(member.id);
-  res.json({ member, latest_release: latest });
+  res.json({ member, latest_release: latest, renewal: getRenewalStatus() });
 });
 
 router.post('/renew', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Please log in.' });
+
+  // Renewal is only accepted while the window is open. Enforced here (not just in
+  // the UI) so the form can't be submitted out of window by hitting the API directly.
+  const renewal = getRenewalStatus();
+  if (!renewal.open) {
+    return res.status(403).json({
+      errors: [`Membership renewal is not currently available. The next renewal period opens on ${renewal.next_open_label}.`],
+    });
+  }
+
   const b = req.body || {};
   const errors = validateRelease(b, { requireCredentials: false });
   if (errors.length) return res.status(400).json({ errors });

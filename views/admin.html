@@ -26,6 +26,36 @@
     <div id="overview-summary" class="notice"></div>
 
     <section class="card">
+      <h2>Membership Renewal Window</h2>
+      <p>Set the dates when the Renew Membership form is available on the My Account page.
+         The period may span the year end (e.g. November 1 through January 31).</p>
+      <div class="notice" id="renewal-status" role="status"></div>
+      <div class="errors" id="renewal-errors" style="display:none" role="alert"></div>
+      <div class="notice" id="renewal-success" style="display:none" role="status"></div>
+      <form id="renewal-form">
+        <div class="field-row">
+          <div class="field"><label for="start-month">Start Month</label>
+            <select id="start-month" name="start-month"></select></div>
+          <div class="field"><label for="start-day">Start Day</label>
+            <input id="start-day" name="start-day" type="number" min="1" max="31" required></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="end-month">End Month</label>
+            <select id="end-month" name="end-month"></select></div>
+          <div class="field"><label for="end-day">End Day</label>
+            <input id="end-day" name="end-day" type="number" min="1" max="31" required></div>
+        </div>
+        <div class="field"><label for="override">Manual Override</label>
+          <select id="override" name="override">
+            <option value="auto">Automatic (use the dates above)</option>
+            <option value="on">Force Open (ignore dates)</option>
+            <option value="off">Force Closed (ignore dates)</option>
+          </select></div>
+        <p><button type="submit" class="btn">Save Renewal Window</button></p>
+      </form>
+    </section>
+
+    <section class="card">
       <h2>Members</h2>
       <p>
         <a class="btn secondary" href="/api/admin/export.csv">Export to CSV</a>
@@ -162,9 +192,66 @@
       e.target.reset();
     });
 
+    // ---- Membership renewal window ----
+    const MONTHS = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+    (function fillMonths() {
+      const opts = MONTHS.map((name, i) => `<option value="${i + 1}">${name}</option>`).join('');
+      document.getElementById('start-month').innerHTML = opts;
+      document.getElementById('end-month').innerHTML = opts;
+    })();
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function showRenewalStatus(status) {
+      const el = document.getElementById('renewal-status');
+      const stateText = status.open ? 'OPEN' : 'CLOSED';
+      const modeText = status.override === 'on' ? ' (forced open)'
+                     : status.override === 'off' ? ' (forced closed)' : '';
+      el.innerHTML = `<strong>Current status:</strong> Renewal is <strong>${stateText}</strong>${modeText}. ` +
+        `Dates: ${APA.escapeHtml(status.start_label)} through ${APA.escapeHtml(status.end_label)}. ` +
+        `Next opens: ${APA.escapeHtml(status.next_open_label)}.`;
+    }
+
+    function applyConfig(config) {
+      const [sm, sd] = config.start.split('-').map(Number);
+      const [em, ed] = config.end.split('-').map(Number);
+      document.getElementById('start-month').value = sm;
+      document.getElementById('start-day').value = sd;
+      document.getElementById('end-month').value = em;
+      document.getElementById('end-day').value = ed;
+      document.getElementById('override').value = config.override;
+    }
+
+    async function loadRenewal() {
+      const { data } = await APA.apiFetch('/api/admin/renewal-settings');
+      if (!data) return;
+      applyConfig(data.config);
+      showRenewalStatus(data.status);
+    }
+
+    document.getElementById('renewal-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      APA.showErrors('renewal-errors', null);
+      document.getElementById('renewal-success').style.display = 'none';
+      const body = {
+        start: pad2(document.getElementById('start-month').value) + '-' + pad2(document.getElementById('start-day').value),
+        end: pad2(document.getElementById('end-month').value) + '-' + pad2(document.getElementById('end-day').value),
+        override: document.getElementById('override').value,
+      };
+      const { ok, data } = await APA.apiFetch('/api/admin/renewal-settings', { method: 'POST', body });
+      if (!ok) { APA.showErrors('renewal-errors', (data && (data.errors || data.error)) || 'Failed to save.'); return; }
+      applyConfig(data.config);
+      showRenewalStatus(data.status);
+      const s = document.getElementById('renewal-success');
+      s.textContent = 'Renewal window saved.';
+      s.style.display = 'block';
+    });
+
     loadOverview();
     loadReleases();
     loadEventRegs();
+    loadRenewal();
   </script>
 </body>
 </html>
