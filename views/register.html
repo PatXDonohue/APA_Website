@@ -65,15 +65,19 @@
         <div class="field"><label for="state">State</label>
           <input id="state" name="state" required maxlength="2" autocomplete="address-level1" value="MA"></div>
         <div class="field"><label for="zip">ZIP</label>
-          <input id="zip" name="zip" required autocomplete="postal-code"></div>
+          <input id="zip" name="zip" required autocomplete="postal-code"
+                 inputmode="numeric" maxlength="10"></div>
       </div>
       <div class="field"><label for="residency">Residency Status</label>
-        <select id="residency" name="residency" required>
-          <option value="">Choose one...</option>
+        <!-- Display-only: auto-populated from ZIP. Value is carried by the hidden #residency_value
+             field below, because disabled controls are excluded from FormData on submit. -->
+        <select id="residency" disabled aria-describedby="residency-help"
+                style="background:#eee; color:var(--ink-muted); cursor:not-allowed;">
           <option value="Resident">Abington Resident</option>
           <option value="Non-Resident">Non-Resident</option>
         </select>
-        <div class="help">Non-resident membership is limited and may have a waitlist.</div>
+        <input type="hidden" id="residency_value" name="residency">
+        <div id="residency-help" class="help">Residency status is automatically determined by your zip code. Non-resident membership is limited and may have a waitlist.</div>
       </div>
 
       <h3>Emergency Contact</h3>
@@ -159,6 +163,38 @@
     const maxDob = new Date();
     maxDob.setFullYear(maxDob.getFullYear() - 50);
     dobInput.max = maxDob.toISOString().slice(0, 10);
+
+    // Residency Status is auto-determined from the ZIP code and is read-only.
+    // The visible <select> is display-only (disabled); #residency_value carries the
+    // submitted value so it survives FormData serialization.
+    const zipInput = document.getElementById('zip');
+    const residencyDisplay = document.getElementById('residency');
+    const residencyValue = document.getElementById('residency_value');
+    const ABINGTON_ZIP = '02351';
+    // Mask input as a US ZIP: 5 digits, then a dash + up to 4 (ZIP+4). Digits only.
+    function formatZip(value) {
+      const d = (value.match(/\d/g) || []).join('').slice(0, 9);
+      return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+    }
+    function syncResidency() {
+      const digits = (zipInput.value.match(/\d/g) || []).join('');
+      let val = ''; // cleared/incomplete ZIP -> blank/default state
+      if (digits.length >= 5) {
+        val = digits.slice(0, 5) === ABINGTON_ZIP ? 'Resident' : 'Non-Resident';
+      }
+      residencyDisplay.value = val;
+      residencyValue.value = val;
+    }
+    zipInput.addEventListener('input', () => {
+      // Keep the caret at the end on the common case of typing/pasting forward.
+      const atEnd = zipInput.selectionStart === zipInput.value.length;
+      zipInput.value = formatZip(zipInput.value);
+      if (atEnd) zipInput.setSelectionRange(zipInput.value.length, zipInput.value.length);
+      syncResidency(); // fires as the 5th digit is typed
+    });
+    zipInput.addEventListener('blur', syncResidency); // and again on focus-out
+    zipInput.value = formatZip(zipInput.value); // normalize any pre-filled value
+    syncResidency(); // initialize in case the field is pre-filled
 
     // Signature pad setup with HiDPI handling
     const canvas = document.getElementById('signature-pad');
