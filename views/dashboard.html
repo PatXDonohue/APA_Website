@@ -55,13 +55,19 @@
         <div class="field-row">
           <div class="field"><label for="city">City</label><input id="city" name="city" required></div>
           <div class="field"><label for="state">State</label><input id="state" name="state" required maxlength="2" value="MA"></div>
-          <div class="field"><label for="zip">ZIP</label><input id="zip" name="zip" required></div>
+          <div class="field"><label for="zip">ZIP</label><input id="zip" name="zip" required
+                 inputmode="numeric" maxlength="10"></div>
         </div>
-        <div class="field"><label for="residency">Residency</label>
-          <select id="residency" name="residency" required>
+        <div class="field"><label for="residency">Residency Status</label>
+          <!-- Display-only: auto-populated from ZIP. Value is carried by the hidden #residency_value
+               field below, because disabled controls are excluded from FormData on submit. -->
+          <select id="residency" disabled aria-describedby="residency-help"
+                  style="background:#eee; color:var(--ink-muted); cursor:not-allowed;">
             <option value="Resident">Abington Resident</option>
             <option value="Non-Resident">Non-Resident</option>
-          </select></div>
+          </select>
+          <input type="hidden" id="residency_value" name="residency">
+          <div id="residency-help" class="help">Residency status is automatically determined by your zip code. Non-resident membership is limited and may have a waitlist.</div></div>
         <div class="field-row">
           <div class="field"><label for="emergency_contact_name">Emergency Contact Name</label><input id="emergency_contact_name" name="emergency_contact_name" required></div>
           <div class="field"><label for="emergency_contact_phone">Emergency Contact Phone</label><input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" required></div>
@@ -99,6 +105,36 @@
     document.getElementById('clear-sig').addEventListener('click', () => pad.clear());
 
     document.getElementById('signed_date').valueAsDate = new Date();
+
+    // Residency Status is auto-determined from the ZIP code and is read-only
+    // (mirrors the registration form). The visible <select> is display-only
+    // (disabled); #residency_value carries the submitted value.
+    const zipInput = document.getElementById('zip');
+    const residencyDisplay = document.getElementById('residency');
+    const residencyValue = document.getElementById('residency_value');
+    const ABINGTON_ZIP = '02351';
+    // Mask input as a US ZIP: 5 digits, then a dash + up to 4 (ZIP+4). Digits only.
+    function formatZip(value) {
+      const d = (value.match(/\d/g) || []).join('').slice(0, 9);
+      return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+    }
+    function syncResidency() {
+      const digits = (zipInput.value.match(/\d/g) || []).join('');
+      let val = ''; // cleared/incomplete ZIP -> blank/default state
+      if (digits.length >= 5) {
+        val = digits.slice(0, 5) === ABINGTON_ZIP ? 'Resident' : 'Non-Resident';
+      }
+      residencyDisplay.value = val;
+      residencyValue.value = val;
+    }
+    zipInput.addEventListener('input', () => {
+      // Keep the caret at the end on the common case of typing/pasting forward.
+      const atEnd = zipInput.selectionStart === zipInput.value.length;
+      zipInput.value = formatZip(zipInput.value);
+      if (atEnd) zipInput.setSelectionRange(zipInput.value.length, zipInput.value.length);
+      syncResidency(); // fires as the 5th digit is typed
+    });
+    zipInput.addEventListener('blur', syncResidency); // and again on focus-out
 
     function statusPill(s) {
       const cls = s === 'Paid' ? 'paid' : (s === 'Expired' ? 'expired' : 'pending');
@@ -142,6 +178,9 @@
         const raw = (r && r[f]) || (m && m[f]) || '';
         el.value = el.type === 'tel' ? APA.formatPhone(raw) : raw;
       }
+      // Normalize the pre-filled ZIP and derive residency from it.
+      zipInput.value = formatZip(zipInput.value);
+      syncResidency();
       resize();
     }
     load();
