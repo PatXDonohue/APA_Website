@@ -2,6 +2,7 @@ const express = require('express');
 const { db, getSetting, setSetting } = require('../database/db');
 const { sendMail, sendWelcomeEmail } = require('../lib/mailer');
 const { getRenewalStatus, getRenewalConfig, parseMd } = require('../lib/renewal');
+const { getNonResidentStatus } = require('../lib/nonResident');
 
 const router = express.Router();
 
@@ -130,6 +131,28 @@ router.post('/renewal-settings', (req, res) => {
   setSetting('renewal_end_md', b.end);
   setSetting('renewal_override', override);
   res.json({ ok: true, config: getRenewalConfig(), status: getRenewalStatus() });
+});
+
+// Non-Resident membership cap configuration (admin-only via the router.use gate above).
+// Returns the live count/remaining/limit so the admin panel can display real-time numbers.
+router.get('/nonresident-settings', (req, res) => {
+  res.json({ status: getNonResidentStatus() });
+});
+
+router.post('/nonresident-settings', (req, res) => {
+  const b = req.body || {};
+  const errors = [];
+  const limit = parseInt(b.limit, 10);
+  if (!Number.isInteger(limit) || limit < 0) {
+    errors.push('Maximum Non-Resident members must be a whole number (0 or more).');
+  }
+  const override = ['auto', 'on', 'off'].includes(b.override) ? b.override : null;
+  if (!override) errors.push('Override must be Automatic, Force Open, or Force Closed.');
+  if (errors.length) return res.status(400).json({ errors });
+
+  setSetting('non_resident_limit', limit);
+  setSetting('non_resident_override', override);
+  res.json({ ok: true, status: getNonResidentStatus() });
 });
 
 module.exports = router;

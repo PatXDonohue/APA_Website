@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { db, getSetting } = require('../database/db');
 const { sendWelcomeEmail } = require('../lib/mailer');
 const { getRenewalStatus } = require('../lib/renewal');
+const { getNonResidentStatus, FULL_MESSAGE: NONRES_FULL_MESSAGE } = require('../lib/nonResident');
 
 const router = express.Router();
 
@@ -52,17 +53,11 @@ router.post('/register', (req, res) => {
   const errors = validateRelease(b, { requireCredentials: true });
   if (errors.length) return res.status(400).json({ errors });
 
-  // Enforce non-resident cap
-  if (b.residency === 'Non-Resident') {
-    const limit = parseInt(getSetting('non_resident_limit', '25'), 10);
-    const count = db
-      .prepare("SELECT COUNT(*) AS c FROM members WHERE residency = 'Non-Resident'")
-      .get().c;
-    if (count >= limit) {
-      return res.status(400).json({
-        errors: [`Non-resident membership is full (${count}/${limit}). Please contact us to be added to the waitlist.`],
-      });
-    }
+  // Enforce the Non-Resident cap (honors the admin override). Residents are never affected.
+  // First check here for a fast, friendly rejection; re-checked inside the transaction below
+  // so the last slot can't be double-taken by two simultaneous submissions.
+  if (b.residency === 'Non-Resident' && !getNonResidentStatus().open) {
+    return res.status(400).json({ errors: [NONRES_FULL_MESSAGE] });
   }
 
   // Email is intentionally not unique (members may share one); only the username must be free.
@@ -76,7 +71,17 @@ router.post('/register', (req, res) => {
   const hash = bcrypt.hashSync(b.password, 10);
   const year = new Date().getFullYear();
 
-  const result = db.transaction(() => {
+  let result;
+  try {
+    result = db.transaction(() => {
+    // Race-safe re-check: a Non-Resident could have taken the last slot between the
+    // check above and now. better-sqlite3 runs synchronously, so this count-and-insert
+    // pair is atomic with respect to other requests — no half-registered rows.
+    if (b.residency === 'Non-Resident' && !getNonResidentStatus().open) {
+      const e = new Error('NONRES_FULL');
+      e.code = 'NONRES_FULL';
+      throw e;
+    }
     const uid = db
       .prepare('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)')
       .run(b.username, b.email, hash, 'member').lastInsertRowid;
@@ -99,7 +104,13 @@ router.post('/register', (req, res) => {
         b.signature_data, b.signed_date
       );
     return { uid, mid };
-  })();
+    })();
+  } catch (e) {
+    if (e && e.code === 'NONRES_FULL') {
+      return res.status(400).json({ errors: [NONRES_FULL_MESSAGE] });
+    }
+    throw e;
+  }
 
   req.session.user = { id: result.uid, username: b.username, email: b.email, role: 'member' };
   res.json({
@@ -107,6 +118,14 @@ router.post('/register', (req, res) => {
     member_id: result.mid,
     message: 'Registration received. Please complete payment to activate your membership.',
   });
+});
+
+// Public: whether Non-Resident registration is currently open, for the registration page.
+// Residents are never gated, so the page only needs this to decide whether to block
+// Non-Residents. Count is computed live (see lib/nonResident.js).
+router.get('/nonresident-availability', (req, res) => {
+  const s = getNonResidentStatus();
+  res.json({ open: s.open, remaining: s.remaining });
 });
 
 // Renewal - prepopulate from latest release

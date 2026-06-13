@@ -56,6 +56,26 @@
     </section>
 
     <section class="card">
+      <h2>Non-Resident Membership Cap</h2>
+      <p>Limit how many Non-Resident members can register. Abington residents (ZIP 02351)
+         are never affected by this cap.</p>
+      <div class="notice" id="nonres-status" role="status">Loading...</div>
+      <div class="errors" id="nonres-errors" style="display:none" role="alert"></div>
+      <div class="notice" id="nonres-success" style="display:none" role="status"></div>
+      <form id="nonres-form">
+        <div class="field"><label for="nonres-limit">Maximum Non-Resident Members</label>
+          <input id="nonres-limit" name="limit" type="number" min="0" step="1" required></div>
+        <div class="field"><label for="nonres-override">Manual Override</label>
+          <select id="nonres-override" name="override">
+            <option value="auto">Automatic (enforce the cap above)</option>
+            <option value="on">Force Open (allow Non-Residents regardless of count)</option>
+            <option value="off">Force Closed (block all Non-Residents)</option>
+          </select></div>
+        <p><button type="submit" class="btn">Save Cap Settings</button></p>
+      </form>
+    </section>
+
+    <section class="card">
       <h2>Members</h2>
       <p>
         <a class="btn secondary" href="/api/admin/export.csv">Export to CSV</a>
@@ -248,10 +268,48 @@
       s.style.display = 'block';
     });
 
+    // ---- Non-Resident membership cap ----
+    function showNonResStatus(s) {
+      const el = document.getElementById('nonres-status');
+      const stateText = s.open ? 'OPEN' : 'CLOSED';
+      const modeText = s.override === 'on' ? ' (forced open)'
+                     : s.override === 'off' ? ' (forced closed)' : '';
+      el.innerHTML =
+        `<strong>Current Non-Resident members:</strong> ${s.count} &nbsp;&middot;&nbsp; ` +
+        `<strong>Slots remaining:</strong> ${s.remaining} &nbsp;&middot;&nbsp; ` +
+        `<strong>Cap:</strong> ${s.limit} &nbsp;&middot;&nbsp; ` +
+        `<strong>Non-Resident registration:</strong> ${stateText}${modeText}`;
+    }
+
+    async function loadNonRes() {
+      const { data } = await APA.apiFetch('/api/admin/nonresident-settings');
+      if (!data || !data.status) return;
+      document.getElementById('nonres-limit').value = data.status.limit;
+      document.getElementById('nonres-override').value = data.status.override;
+      showNonResStatus(data.status);
+    }
+
+    document.getElementById('nonres-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      APA.showErrors('nonres-errors', null);
+      document.getElementById('nonres-success').style.display = 'none';
+      const body = {
+        limit: document.getElementById('nonres-limit').value,
+        override: document.getElementById('nonres-override').value,
+      };
+      const { ok, data } = await APA.apiFetch('/api/admin/nonresident-settings', { method: 'POST', body });
+      if (!ok) { APA.showErrors('nonres-errors', (data && (data.errors || data.error)) || 'Failed to save.'); return; }
+      showNonResStatus(data.status);
+      const s = document.getElementById('nonres-success');
+      s.textContent = 'Cap settings saved.';
+      s.style.display = 'block';
+    });
+
     loadOverview();
     loadReleases();
     loadEventRegs();
     loadRenewal();
+    loadNonRes();
   </script>
 </body>
 </html>

@@ -127,6 +127,7 @@ function seedIfEmpty() {
   );
 
   insertSetting.run('non_resident_limit', '25');
+  insertSetting.run('non_resident_override', 'auto'); // 'auto' | 'on' | 'off' (see lib/nonResident.js)
   insertSetting.run('annual_dues_cents', '5000');
   insertSetting.run('guest_fee_cents', '1000');
   insertSetting.run('card_fee_percent', '3');

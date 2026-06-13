@@ -31,6 +31,14 @@
     <p>Please complete the form below to join the APA. You must be at least 50 years old.
        Already a member? <a href="/login">Log in</a> to renew.</p>
 
+    <!-- Upfront heads-up shown when the Non-Resident cap is full, so a non-resident
+         knows before filling out the form (residency is derived from the ZIP mid-form). -->
+    <div class="notice" id="nonresident-banner" style="display:none" role="status">
+      <strong>Non-Resident membership is currently full.</strong>
+      Abington residents (ZIP&nbsp;02351) are welcome to register, but non-residents are
+      unable to join at this time. Please check back during the next renewal period.
+    </div>
+
     <div class="errors" id="form-errors" style="display:none" role="alert"></div>
 
     <form id="reg-form" class="card" novalidate>
@@ -77,8 +85,10 @@
           <option value="Non-Resident">Non-Resident</option>
         </select>
         <input type="hidden" id="residency_value" name="residency">
-        <div id="residency-help" class="help">Residency status is automatically determined by your zip code. Non-resident membership is limited and may have a waitlist.</div>
+        <div id="residency-help" class="help">Residency status is automatically determined by your zip code. Non-resident membership is limited.</div>
       </div>
+      <!-- Shown only when the entered ZIP is Non-Resident and the cap has been reached. -->
+      <div class="notice" id="nonresident-full" style="display:none" role="status"></div>
 
       <h3>Emergency Contact</h3>
       <div class="field-row">
@@ -140,7 +150,7 @@
           <input id="signed_date" name="signed_date" type="date" required></div>
       </div>
 
-      <p><button type="submit" class="btn">Submit Registration</button></p>
+      <p><button type="submit" class="btn" id="reg-submit">Submit Registration</button></p>
     </form>
   </main>
 
@@ -184,7 +194,36 @@
       }
       residencyDisplay.value = val;
       residencyValue.value = val;
+      updateNonResidentGate();
     }
+
+    // Non-Resident cap gate. The cap status is loaded once on page load; whenever the
+    // derived residency is Non-Resident and the cap is full, we block submission and
+    // explain why. Residents (ZIP 02351) are never affected.
+    const NONRES_FULL_MSG =
+      "We're sorry, Non-Resident membership is currently full. Please check back during the next renewal period.";
+    let nonResidentOpen = true;
+    function updateNonResidentGate() {
+      const blocked = residencyValue.value === 'Non-Resident' && !nonResidentOpen;
+      const msg = document.getElementById('nonresident-full');
+      const submitBtn = document.getElementById('reg-submit');
+      if (blocked) {
+        msg.textContent = NONRES_FULL_MSG;
+        msg.style.display = 'block';
+        submitBtn.disabled = true;
+      } else {
+        msg.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    }
+    async function loadNonResidentStatus() {
+      const { data } = await APA.apiFetch('/api/members/nonresident-availability');
+      if (data && typeof data.open === 'boolean') nonResidentOpen = data.open;
+      // Top-of-page heads-up the moment the page loads, before any ZIP is entered.
+      document.getElementById('nonresident-banner').style.display = nonResidentOpen ? 'none' : 'block';
+      updateNonResidentGate();
+    }
+
     zipInput.addEventListener('input', () => {
       // Keep the caret at the end on the common case of typing/pasting forward.
       const atEnd = zipInput.selectionStart === zipInput.value.length;
@@ -195,6 +234,7 @@
     zipInput.addEventListener('blur', syncResidency); // and again on focus-out
     zipInput.value = formatZip(zipInput.value); // normalize any pre-filled value
     syncResidency(); // initialize in case the field is pre-filled
+    loadNonResidentStatus(); // learn whether Non-Resident registration is currently open
 
     // Signature pad setup with HiDPI handling
     const canvas = document.getElementById('signature-pad');
@@ -235,6 +275,8 @@
         if (age < 50) errors.push('You must be at least 50 years old to join.');
       }
       if (pad.isEmpty()) errors.push('Please sign in the signature box.');
+      // Client-side cap guard (the server enforces this too; this is just for a clean message).
+      if (data.residency === 'Non-Resident' && !nonResidentOpen) errors.push(NONRES_FULL_MSG);
 
       if (errors.length) { APA.showErrors('form-errors', errors); window.scrollTo(0, 0); return; }
 
